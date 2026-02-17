@@ -37,17 +37,11 @@ export default function RootLayout({
         <div className="bg-blob blob-1" />
         <div className="bg-blob blob-2" />
         <div className="bg-blob blob-3" />
-        <nav className="sticky top-0 z-10 border-b border-white/20 bg-white/60 backdrop-blur">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium">
-            <span className="mr-2 text-base font-semibold gradient-title">Subtrack</span>
-            <Link className="nav-pill" href="/">Dashboard</Link>
-            <Link className="nav-pill" href="/transactions">Transactions</Link>
-            <Link className="nav-pill" href="/subscriptions">Subscriptions</Link>
-            <Link className="nav-pill" href="/import">Import</Link>
-            <Link className="nav-pill" href="/settings">Settings</Link>
-          </div>
-        </nav>
-        <main className="mx-auto w-full max-w-5xl px-4 py-6">{children}</main>
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-3 pt-4">
+          <span className="text-base font-semibold gradient-title">Subtrack</span>
+          <Link className="nav-pill" href="/profile">Profile</Link>
+        </header>
+        <main className="mx-auto w-full max-w-6xl px-3 py-4">{children}</main>
       </body>
     </html>
   );

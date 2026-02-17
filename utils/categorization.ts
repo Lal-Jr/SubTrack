@@ -2,8 +2,11 @@ import db, { Rule, Transaction } from '../db/schema';
 
 export function autoCategorize(transaction: Transaction, rules: Rule[]): string {
   const desc = transaction.description.toLowerCase();
+  const acct = (transaction.account || '').toLowerCase();
   for (const rule of rules) {
-    if (desc.includes(rule.keyword.toLowerCase())) {
+    const keywordMatch = rule.keyword && desc.includes(rule.keyword.toLowerCase());
+    const accountMatch = rule.accountKeyword && acct.includes(rule.accountKeyword.toLowerCase());
+    if (keywordMatch || accountMatch) {
       return rule.category;
     }
   }

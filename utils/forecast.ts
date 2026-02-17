@@ -1,25 +1,23 @@
 import { Transaction, Subscription } from '../db/schema';
 
-export function forecastBalance({
+export function forecastExpenses({
   transactions,
   subscriptions,
-  months = 6
+  months = 6,
 }: {
   transactions: Transaction[];
   subscriptions: Subscription[];
   months?: number;
-}): { date: string; balance: number }[] {
+}): { date: string; expense: number }[] {
   const now = new Date();
   const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  let balance = sorted.reduce((acc, tx) => acc + tx.amount, 0);
-  const monthlyIncome = avgMonthly(sorted, true);
   const monthlyExpense = avgMonthly(sorted, false);
   const monthlySubs = subscriptions.filter(s => s.active).reduce((a, s) => a + s.avgAmount, 0);
-  const forecast: { date: string; balance: number }[] = [];
+  const forecast: { date: string; expense: number }[] = [];
   for (let i = 1; i <= months; i++) {
-    balance += monthlyIncome - monthlyExpense - monthlySubs;
     const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    forecast.push({ date: date.toISOString().slice(0, 10), balance: Math.round(balance * 100) / 100 });
+    const expense = monthlyExpense + monthlySubs;
+    forecast.push({ date: date.toISOString().slice(0, 10), expense: Math.round(expense * 100) / 100 });
   }
   return forecast;
 }

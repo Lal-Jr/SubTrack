@@ -34,7 +34,8 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
         nextRenewal: new Date(new Date(group[group.length - 1].date).getTime() + avgInterval).toISOString().slice(0, 10),
         lastCharged: group[group.length - 1].date,
         active: true,
-        confidence: 0.9
+        confidence: 0.9,
+        frequency: 'monthly'
       });
     } else if (avgInterval > yearMs * 0.8 && avgInterval < yearMs * 1.2) {
       subs.push({
@@ -44,7 +45,8 @@ export function detectSubscriptions(transactions: Transaction[]): Subscription[]
         nextRenewal: new Date(new Date(group[group.length - 1].date).getTime() + avgInterval).toISOString().slice(0, 10),
         lastCharged: group[group.length - 1].date,
         active: true,
-        confidence: 0.7
+        confidence: 0.7,
+        frequency: 'yearly'
       });
     }
   });

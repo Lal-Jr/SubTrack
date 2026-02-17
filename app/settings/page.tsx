@@ -49,43 +49,45 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <p className="text-xs uppercase tracking-widest text-slate-500">Preferences</p>
         <h1 className="text-3xl font-semibold gradient-title">Settings</h1>
       </div>
 
-      <div className="card space-y-3">
-        <h2 className="text-lg font-semibold">Categories</h2>
-        <div className="flex gap-2">
-          <input className="input" value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="e.g. Groceries" />
-          <button className="btn" onClick={addCategory}>Add</button>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="card space-y-3">
+          <h2 className="text-lg font-semibold">Categories</h2>
+          <div className="flex gap-2">
+            <input className="input" value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="e.g. Groceries" />
+            <button className="btn" onClick={addCategory}>Add</button>
+          </div>
+          <ul className="space-y-2 text-sm">
+            {categories.map(c => (
+              <li key={c.id} className="flex items-center justify-between">
+                <span>{c.name}</span>
+                <button className="btn btn-secondary" onClick={() => deleteCategory(c.id)}>Delete</button>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="space-y-2 text-sm">
-          {categories.map(c => (
-            <li key={c.id} className="flex items-center justify-between">
-              <span>{c.name}</span>
-              <button className="btn btn-secondary" onClick={() => deleteCategory(c.id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
-      </div>
 
-      <div className="card space-y-3">
-        <h2 className="text-lg font-semibold">Auto-Categorization Rules</h2>
-        <div className="grid gap-2 md:grid-cols-3">
-          <input className="input" value={ruleKeyword} onChange={e => setRuleKeyword(e.target.value)} placeholder="keyword (e.g. amazon)" />
-          <input className="input" value={ruleCategory} onChange={e => setRuleCategory(e.target.value)} placeholder="category" />
-          <button className="btn" onClick={addRule}>Add Rule</button>
+        <div className="card space-y-3">
+          <h2 className="text-lg font-semibold">Auto-Categorization Rules</h2>
+          <div className="grid gap-2 md:grid-cols-3">
+            <input className="input" value={ruleKeyword} onChange={e => setRuleKeyword(e.target.value)} placeholder="keyword (e.g. amazon)" />
+            <input className="input" value={ruleCategory} onChange={e => setRuleCategory(e.target.value)} placeholder="category" />
+            <button className="btn" onClick={addRule}>Add Rule</button>
+          </div>
+          <ul className="space-y-2 text-sm">
+            {rules.map(r => (
+              <li key={r.id} className="flex items-center justify-between">
+                <span>{r.keyword} → {r.category}</span>
+                <button className="btn btn-secondary" onClick={() => deleteRule(r.id)}>Delete</button>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="space-y-2 text-sm">
-          {rules.map(r => (
-            <li key={r.id} className="flex items-center justify-between">
-              <span>{r.keyword} → {r.category}</span>
-              <button className="btn btn-secondary" onClick={() => deleteRule(r.id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );

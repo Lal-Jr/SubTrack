@@ -34,7 +34,7 @@ export default function SubscriptionsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-widest text-slate-500">Recurring</p>
@@ -45,26 +45,28 @@ export default function SubscriptionsPage() {
 
       <div className="card space-y-3">
         {subscriptions.length ? (
-          subscriptions.map(sub => (
-            <div key={sub.id} className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-              <div>
-                <div className="font-medium">{sub.name}</div>
-                <div className="text-sm text-slate-500">Last: {sub.lastCharged} • Next: {sub.nextRenewal}</div>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_0.6fr] gap-2 text-xs uppercase tracking-wide text-slate-500">
+              <span>Name</span>
+              <span>Last / Next</span>
+              <span>Amount</span>
+              <span>Status</span>
+            </div>
+            <div className="soft-divider" />
+            {subscriptions.map(sub => (
+              <div key={sub.id} className="grid grid-cols-[1.4fr_1fr_1fr_0.6fr] items-center gap-2">
+                <div>
+                  <div className="font-medium">{sub.name}</div>
+                  <div className="text-xs text-slate-500">Confidence: {(sub.confidence || 0).toFixed(2)}</div>
+                </div>
+                <div className="text-xs text-slate-500">{sub.lastCharged} → {sub.nextRenewal}</div>
                 <input
                   className="input"
                   type="number"
                   value={sub.avgAmount}
                   onChange={e => updateSub({ ...sub, avgAmount: Number(e.target.value) })}
                 />
-                <input
-                  className="input"
-                  type="date"
-                  value={sub.nextRenewal}
-                  onChange={e => updateSub({ ...sub, nextRenewal: e.target.value })}
-                />
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-xs">
                   <input
                     type="checkbox"
                     checked={sub.active}
@@ -73,8 +75,8 @@ export default function SubscriptionsPage() {
                   Active
                 </label>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
           <p className="text-slate-500">No subscriptions detected yet.</p>
         )}

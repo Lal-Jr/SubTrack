@@ -17,6 +17,7 @@ export interface Category {
 export interface Rule {
   id: string;
   keyword: string;
+  accountKeyword?: string;
   category: string;
 }
 
@@ -28,6 +29,7 @@ export interface Subscription {
   lastCharged: string;
   active: boolean;
   confidence?: number;
+  frequency: 'monthly' | 'yearly' | 'once';
 }
 
 export interface ForecastSnapshot {
@@ -36,21 +38,30 @@ export interface ForecastSnapshot {
   balance: number;
 }
 
+export interface Profile {
+  id: string;
+  name: string;
+  monthlyIncome: number;
+  createdAt: string;
+}
+
 export class SubtrackDB extends Dexie {
   transactions!: Table<Transaction, string>;
   categories!: Table<Category, string>;
   rules!: Table<Rule, string>;
   subscriptions!: Table<Subscription, string>;
   forecast_snapshots!: Table<ForecastSnapshot, string>;
+  profiles!: Table<Profile, string>;
 
   constructor() {
     super('SubtrackDB');
-    this.version(1).stores({
+    this.version(3).stores({
       transactions: 'id, date, category, description',
       categories: 'id, name',
-      rules: 'id, keyword, category',
-      subscriptions: 'id, name, nextRenewal, lastCharged, active',
+      rules: 'id, keyword, accountKeyword, category',
+      subscriptions: 'id, name, nextRenewal, lastCharged, active, frequency',
       forecast_snapshots: 'id, date',
+      profiles: 'id, name',
     });
   }
 }
