@@ -86,7 +86,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-slate-500">Overview</p>
+          <h1 className="text-3xl font-semibold gradient-title">Dashboard</h1>
+        </div>
         {installPrompt && (
           <button
             className="btn"
@@ -99,6 +102,10 @@ export default function DashboardPage() {
             Install App
           </button>
         )}
+      </div>
+
+      <div className="stat-chip text-xs text-slate-600">
+        Offline-first • Local data • PWA
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

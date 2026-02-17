@@ -33,15 +33,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#2563eb" />
         <link rel="icon" href="/icon.svg" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
-        <nav className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3 text-sm font-medium">
-            <span className="mr-2 text-base font-semibold text-blue-600">Subtrack</span>
-            <Link href="/">Dashboard</Link>
-            <Link href="/transactions">Transactions</Link>
-            <Link href="/subscriptions">Subscriptions</Link>
-            <Link href="/import">Import</Link>
-            <Link href="/settings">Settings</Link>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-900`}>
+        <div className="bg-blob blob-1" />
+        <div className="bg-blob blob-2" />
+        <div className="bg-blob blob-3" />
+        <nav className="sticky top-0 z-10 border-b border-white/20 bg-white/60 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 text-sm font-medium">
+            <span className="mr-2 text-base font-semibold gradient-title">Subtrack</span>
+            <Link className="nav-pill" href="/">Dashboard</Link>
+            <Link className="nav-pill" href="/transactions">Transactions</Link>
+            <Link className="nav-pill" href="/subscriptions">Subscriptions</Link>
+            <Link className="nav-pill" href="/import">Import</Link>
+            <Link className="nav-pill" href="/settings">Settings</Link>
           </div>
         </nav>
         <main className="mx-auto w-full max-w-5xl px-4 py-6">{children}</main>

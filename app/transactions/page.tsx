@@ -63,9 +63,12 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Transactions</h1>
-        <div className="text-sm text-slate-500">Balance: ${balance.toFixed(2)}</div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-slate-500">Activity</p>
+          <h1 className="text-3xl font-semibold gradient-title">Transactions</h1>
+        </div>
+        <div className="rounded-full bg-white/70 px-4 py-2 text-sm shadow">Balance: ${balance.toFixed(2)}</div>
       </div>
 
       <div className="card space-y-3">

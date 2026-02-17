@@ -50,7 +50,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div>
+        <p className="text-xs uppercase tracking-widest text-slate-500">Preferences</p>
+        <h1 className="text-3xl font-semibold gradient-title">Settings</h1>
+      </div>
 
       <div className="card space-y-3">
         <h2 className="text-lg font-semibold">Categories</h2>

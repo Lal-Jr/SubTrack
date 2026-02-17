@@ -33,7 +33,10 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Import CSV</h1>
+      <div>
+        <p className="text-xs uppercase tracking-widest text-slate-500">Data Intake</p>
+        <h1 className="text-3xl font-semibold gradient-title">Import CSV</h1>
+      </div>
 
       <div className="card space-y-3">
         <input type="file" accept=".csv" onChange={e => e.target.files?.[0] && onFile(e.target.files[0])} />

@@ -35,8 +35,11 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Subscriptions</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-slate-500">Recurring</p>
+          <h1 className="text-3xl font-semibold gradient-title">Subscriptions</h1>
+        </div>
         <button className="btn" onClick={detect}>Re-Detect</button>
       </div>
 
