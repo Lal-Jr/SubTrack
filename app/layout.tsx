@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import Link from 'next/link';
 import './globals.css';
+import DBInit from './DBInit';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,6 +34,7 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-900`}>
+        <DBInit />
         <div className="bg-blob blob-1" />
         <div className="bg-blob blob-2" />
         <div className="bg-blob blob-3" />
