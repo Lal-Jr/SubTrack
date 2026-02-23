@@ -16,8 +16,8 @@ export default function DashboardPage() {
           This is your basic skeleton. Currently, there is no database connected and no complex logic running.
         </p>
         <div className="flex gap-4">
-          <Link href="#" className="btn">
-            Add Transaction (Coming Soon)
+          <Link href="/add" className="btn">
+            Add Subscription
           </Link>
           <Link href="#" className="btn btn-secondary">
             Sync Data (Coming Soon)
