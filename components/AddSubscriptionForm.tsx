@@ -12,7 +12,9 @@ export default function AddSubscriptionForm() {
         name: '',
         amount: '',
         currency: 'INR',
-        intervalDays: '30',
+        intervalType: 'monthly', // 'weekly', 'monthly', 'yearly', 'custom'
+        intervalCount: '1',     // used if custom
+        intervalUnit: 'month',  // 'day', 'week', 'month', 'year'
         billingStartDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     });
 
@@ -36,14 +38,58 @@ export default function AddSubscriptionForm() {
             return;
         }
 
-        const intervalDays = parseInt(formData.intervalDays, 10);
+        let count = 1;
+        let unit = 'month';
+
+        if (formData.intervalType === 'weekly') {
+            count = 1; unit = 'week';
+        } else if (formData.intervalType === 'monthly') {
+            count = 1; unit = 'month';
+        } else if (formData.intervalType === 'yearly') {
+            count = 1; unit = 'year';
+        } else if (formData.intervalType === 'custom') {
+            count = parseInt(formData.intervalCount, 10);
+            unit = formData.intervalUnit;
+            if (isNaN(count) || count <= 0) {
+                alert('Please enter a valid custom interval number');
+                return;
+            }
+        }
+
         let nextChargeDate = new Date(billingDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         // Calculate next charge date based on billing start date and interval
+        // Advance the date until it is strictly in the future (after today)
         while (nextChargeDate <= today) {
-            nextChargeDate.setDate(nextChargeDate.getDate() + intervalDays);
+            if (unit === 'day') {
+                nextChargeDate.setDate(nextChargeDate.getDate() + count);
+            } else if (unit === 'week') {
+                nextChargeDate.setDate(nextChargeDate.getDate() + (count * 7));
+            } else if (unit === 'month') {
+                // To handle end-of-month correctly (e.g. Jan 31 + 1 month -> Feb 28/29)
+                const expectedMonth = nextChargeDate.getMonth() + count;
+                nextChargeDate.setMonth(expectedMonth);
+
+                // If the month leaped too far because the day didn't exist in the target month
+                // (e.g. going from Jan 31 to Feb 31, JS rolls it to Mar 2/3)
+                // We clamp it to the last day of the expected target month.
+                // The expected target month mod 12 is calculated here:
+                const targetMonthIndex = (((billingDate.getMonth() + count) % 12) + 12) % 12;
+                // Actually, a simpler clamp check:
+                // We want to add 'count' months.
+                // If we started on the 31st, and the new month doesn't have 31 days, JS pushes us to the next month.
+                // It's usually easier to just recalculate from the start date, but since we are in a while loop
+                // advancing sequentially, we can track the original day:
+                const originalCycleDay = billingDate.getDate();
+                if (nextChargeDate.getDate() !== originalCycleDay) {
+                    // It rolled over. Set to last day of the *correct* destination month.
+                    nextChargeDate.setDate(0);
+                }
+            } else if (unit === 'year') {
+                nextChargeDate.setFullYear(nextChargeDate.getFullYear() + count);
+            }
         }
 
         const nextChargeDateString = nextChargeDate.toISOString().split('T')[0];
@@ -56,14 +102,15 @@ export default function AddSubscriptionForm() {
 
             await db.execute(
                 `INSERT INTO subscriptions 
-          (id, name, amount, currency, interval_days, next_charge_date, source, confidence, active, created_at, updated_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     id,
                     formData.name,
                     parseFloat(formData.amount),
                     formData.currency,
-                    intervalDays,
+                    count,
+                    unit,
                     nextChargeDateString,
                     'manual',
                     1.0, // confidence
@@ -135,17 +182,18 @@ export default function AddSubscriptionForm() {
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label htmlFor="intervalDays" className="label block mb-1">Billing Interval</label>
+                    <label htmlFor="intervalType" className="label block mb-1">Billing Interval</label>
                     <select
-                        id="intervalDays"
-                        name="intervalDays"
-                        value={formData.intervalDays}
+                        id="intervalType"
+                        name="intervalType"
+                        value={formData.intervalType}
                         onChange={handleChange}
                         className="input w-full"
                     >
-                        <option value="7">Weekly (7 days)</option>
-                        <option value="30">Monthly (30 days)</option>
-                        <option value="365">Yearly (365 days)</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                        <option value="custom">Custom...</option>
                     </select>
                 </div>
                 <div>
@@ -162,6 +210,39 @@ export default function AddSubscriptionForm() {
                 </div>
             </div>
 
+            {formData.intervalType === 'custom' && (
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div>
+                        <label htmlFor="intervalCount" className="label block mb-1">Every</label>
+                        <input
+                            type="number"
+                            id="intervalCount"
+                            name="intervalCount"
+                            min="1"
+                            value={formData.intervalCount}
+                            onChange={handleChange}
+                            className="input"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="intervalUnit" className="label block mb-1">Unit</label>
+                        <select
+                            id="intervalUnit"
+                            name="intervalUnit"
+                            value={formData.intervalUnit}
+                            onChange={handleChange}
+                            className="input w-full"
+                        >
+                            <option value="day">Days</option>
+                            <option value="week">Weeks</option>
+                            <option value="month">Months</option>
+                            <option value="year">Years</option>
+                        </select>
+                    </div>
+                </div>
+            )}
+
             <div className="pt-4 flex justify-end">
                 <button
                     type="submit"
@@ -171,6 +252,6 @@ export default function AddSubscriptionForm() {
                     {loading ? 'Adding...' : 'Add Subscription'}
                 </button>
             </div>
-        </form>
+        </form >
     );
 }
