@@ -11,9 +11,9 @@ export default function AddSubscriptionForm() {
     const [formData, setFormData] = useState({
         name: '',
         amount: '',
-        currency: 'USD',
+        currency: 'INR',
         intervalDays: '30',
-        nextChargeDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        billingStartDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -23,6 +23,31 @@ export default function AddSubscriptionForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const parsedAmount = parseFloat(formData.amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            alert('Amount must be greater than 0');
+            return;
+        }
+
+        const billingDate = new Date(formData.billingStartDate);
+        if (isNaN(billingDate.getTime())) {
+            alert('Please enter a valid billing date');
+            return;
+        }
+
+        const intervalDays = parseInt(formData.intervalDays, 10);
+        let nextChargeDate = new Date(billingDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Calculate next charge date based on billing start date and interval
+        while (nextChargeDate <= today) {
+            nextChargeDate.setDate(nextChargeDate.getDate() + intervalDays);
+        }
+
+        const nextChargeDateString = nextChargeDate.toISOString().split('T')[0];
+
         setLoading(true);
 
         try {
@@ -38,8 +63,8 @@ export default function AddSubscriptionForm() {
                     formData.name,
                     parseFloat(formData.amount),
                     formData.currency,
-                    parseInt(formData.intervalDays, 10),
-                    formData.nextChargeDate,
+                    intervalDays,
+                    nextChargeDateString,
                     'manual',
                     1.0, // confidence
                     1,   // active
@@ -61,7 +86,7 @@ export default function AddSubscriptionForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="label block mb-1">Subscription Name</label>
+                <label htmlFor="name" className="label block mb-1">Merchant Name</label>
                 <input
                     type="text"
                     id="name"
@@ -78,16 +103,20 @@ export default function AddSubscriptionForm() {
                 <div>
                     <label htmlFor="amount" className="label block mb-1">Amount</label>
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         id="amount"
                         name="amount"
                         value={formData.amount}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            if (e.target.value === '' || /^[0-9]+$/.test(e.target.value)) {
+                                handleChange(e);
+                            }
+                        }}
                         required
-                        step="0.01"
-                        min="0"
                         className="input"
-                        placeholder="0.00"
+                        placeholder="0"
                     />
                 </div>
                 <div>
@@ -99,9 +128,6 @@ export default function AddSubscriptionForm() {
                         onChange={handleChange}
                         className="input w-full"
                     >
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
                         <option value="INR">INR</option>
                     </select>
                 </div>
@@ -123,12 +149,12 @@ export default function AddSubscriptionForm() {
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="nextChargeDate" className="label block mb-1">Next Charge Date</label>
+                    <label htmlFor="billingStartDate" className="label block mb-1">Billing Date</label>
                     <input
                         type="date"
-                        id="nextChargeDate"
-                        name="nextChargeDate"
-                        value={formData.nextChargeDate}
+                        id="billingStartDate"
+                        name="billingStartDate"
+                        value={formData.billingStartDate}
                         onChange={handleChange}
                         required
                         className="input"
