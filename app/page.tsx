@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SubscriptionTable from '@/components/SubscriptionTable';
 
 export default function DashboardPage() {
   return (
@@ -11,18 +12,19 @@ export default function DashboardPage() {
       </div>
 
       <div className="card space-y-4">
-        <h2 className="text-xl font-semibold">Your Finances</h2>
-        <p className="text-slate-600">
-          This is your basic skeleton. Currently, there is no database connected and no complex logic running.
-        </p>
-        <div className="flex gap-4">
-          <Link href="/add" className="btn">
-            Add Subscription
-          </Link>
-          <Link href="#" className="btn btn-secondary">
-            Sync Data (Coming Soon)
-          </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h2 className="text-xl font-semibold">Your Subscriptions</h2>
+          <div className="flex gap-4">
+            <Link href="/add" className="btn text-sm px-4 py-2">
+              Add Subscription
+            </Link>
+            <Link href="#" className="btn btn-secondary text-sm px-4 py-2">
+              Sync Data
+            </Link>
+          </div>
         </div>
+
+        <SubscriptionTable />
       </div>
     </div>
   );
