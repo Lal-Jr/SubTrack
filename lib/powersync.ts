@@ -16,6 +16,14 @@ const AppSchema = new Schema({
         created_at: column.integer,
         updated_at: column.integer,
     }),
+    profiles: new Table({
+        id: column.text,
+        name: column.text,
+        monthly_income: column.real,
+        currency: column.text,
+        created_at: column.integer,
+        updated_at: column.integer,
+    }),
 });
 
 export const db = new PowerSyncDatabase({

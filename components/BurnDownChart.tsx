@@ -24,8 +24,15 @@ type Subscription = {
     active?: number;
 };
 
+type Profile = {
+    id: string;
+    monthly_income: number | null;
+    currency: string;
+};
+
 export default function BurnDownChart() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -61,6 +68,23 @@ export default function BurnDownChart() {
                         } catch (e: any) {
                             if (e.name !== 'AbortError') {
                                 console.error('Error watching subscriptions:', e);
+                            }
+                        }
+                    })();
+
+                    (async () => {
+                        try {
+                            for await (const result of db.watch('SELECT * FROM profiles LIMIT 1', [], { signal: abortController.signal })) {
+                                if (mounted) {
+                                    const rows = result.rows?._array || [];
+                                    if (rows.length > 0) {
+                                        setProfile(rows[0] as Profile);
+                                    }
+                                }
+                            }
+                        } catch (e: any) {
+                            if (e.name !== 'AbortError') {
+                                console.error('Error watching profiles:', e);
                             }
                         }
                     })();
@@ -335,7 +359,14 @@ export default function BurnDownChart() {
                 <div className="flex gap-6 text-sm">
                     <div>
                         <p className="text-slate-500 font-medium">Monthly Avg</p>
-                        <p className="text-xl font-bold text-slate-900">₹{monthlyRate.toFixed(2)}</p>
+                        <p className="text-xl font-bold text-slate-900">
+                            ₹{monthlyRate.toFixed(2)}
+                            {profile?.monthly_income ? (
+                                <span className="text-sm font-normal text-slate-500 ml-2">
+                                    {((monthlyRate / profile.monthly_income) * 100).toFixed(1)}% of income
+                                </span>
+                            ) : null}
+                        </p>
                     </div>
                     <div>
                         <p className="text-slate-500 font-medium">Yearly Total</p>
