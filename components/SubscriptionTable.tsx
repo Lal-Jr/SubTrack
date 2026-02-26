@@ -24,11 +24,10 @@ export default function SubscriptionTable() {
     useEffect(() => {
         let mounted = true;
 
-        async function loadData() {
+        async function initWatch() {
             try {
                 // Wait for DB to be potentially ready.
                 // If DBInit is running in parallel, we might need a short delay or retry mechanism.
-                // We'll use a simple retry up to 10 times (1 second)
                 let retries = 0;
                 let ready = false;
                 while (retries < 10 && !ready) {
@@ -43,24 +42,45 @@ export default function SubscriptionTable() {
                 }
 
                 if (ready) {
-                    const result = await db.getAll('SELECT * FROM subscriptions');
-                    if (mounted) {
-                        setSubscriptions(result as Subscription[]);
-                    }
+                    const abortController = new AbortController();
+
+                    // Use watch to react to changes in real-time
+                    (async () => {
+                        try {
+                            for await (const result of db.watch('SELECT * FROM subscriptions', [], { signal: abortController.signal })) {
+                                if (mounted) {
+                                    // PowerSync returns rows array which we map over or cast
+                                    const rows = result.rows?._array || [];
+                                    setSubscriptions(rows as Subscription[]);
+                                    setLoading(false);
+                                }
+                            }
+                        } catch (e: any) {
+                            if (e.name !== 'AbortError') {
+                                console.error('Error watching subscriptions:', e);
+                            }
+                        }
+                    })();
+
+                    return () => {
+                        abortController.abort();
+                    };
                 } else {
                     console.error("DB not ready after 1 second.");
                 }
             } catch (e) {
-                console.error("Failed to load subs", e);
-            } finally {
+                console.error("Failed to init watch for subs", e);
                 if (mounted) setLoading(false);
             }
         }
 
-        loadData();
+        const cleanupPromise = initWatch();
 
         return () => {
             mounted = false;
+            cleanupPromise.then(cleanup => {
+                if (cleanup) cleanup();
+            });
         };
     }, []);
 

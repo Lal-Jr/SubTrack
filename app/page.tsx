@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import SubscriptionTable from '@/components/SubscriptionTable';
+import BurnDownChart from '@/components/BurnDownChart';
+import SpendDistributionChart from '@/components/SpendDistributionChart';
 
 export default function DashboardPage() {
   return (
@@ -8,6 +10,15 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-semibold gradient-title">Dashboard</h1>
           <p className="text-sm text-slate-500">Welcome to Subtrack. Let's build this piece by piece.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <BurnDownChart />
+        </div>
+        <div className="lg:col-span-1">
+          <SpendDistributionChart />
         </div>
       </div>
 
