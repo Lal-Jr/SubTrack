@@ -25,14 +25,6 @@ export default function DashboardPage() {
       <div className="card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-xl font-semibold">Your Subscriptions</h2>
-          <div className="flex gap-4">
-            <Link href="/add" className="btn text-sm px-4 py-2">
-              Add Subscription
-            </Link>
-            <Link href="#" className="btn btn-secondary text-sm px-4 py-2">
-              Sync Data
-            </Link>
-          </div>
         </div>
 
         <SubscriptionTable />

@@ -21,6 +21,7 @@ const AppSchema = new Schema({
         name: column.text,
         monthly_income: column.real,
         currency: column.text,
+        last_csv_upload: column.integer,
         created_at: column.integer,
         updated_at: column.integer,
     }),
