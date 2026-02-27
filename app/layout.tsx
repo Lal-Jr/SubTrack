@@ -33,7 +33,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#2563eb" />
         <link rel="icon" href="/icon.svg" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-900`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <DBInit />
         <div className="bg-blob blob-1" />
         <div className="bg-blob blob-2" />

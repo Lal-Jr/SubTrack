@@ -282,8 +282,8 @@ export default function BurnDownChart() {
     if (loading) {
         return (
             <div className="card p-6 animate-pulse">
-                <div className="h-6 bg-slate-200 rounded w-1/4 mb-4"></div>
-                <div className="h-40 bg-slate-100 rounded w-full"></div>
+                <div className="h-6 bg-white/10 rounded w-1/4 mb-4"></div>
+                <div className="h-40 bg-white/5 rounded w-full"></div>
             </div>
         );
     }
@@ -295,15 +295,15 @@ export default function BurnDownChart() {
         return (
             <div className="card space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <h2 className="text-xl font-semibold">Spend Projection</h2>
+                    <h2 className="text-xl font-semibold text-slate-100">Spend Projection</h2>
                     <div className="flex gap-6 text-sm">
                         <div>
-                            <p className="text-slate-500 font-medium">Monthly Avg</p>
-                            <p className="text-xl font-bold text-slate-900">₹0.00</p>
+                            <p className="text-slate-400 font-medium">Monthly Avg</p>
+                            <p className="text-xl font-bold text-white">₹0.00</p>
                         </div>
                         <div>
-                            <p className="text-slate-500 font-medium">Yearly Total</p>
-                            <p className="text-xl font-bold text-slate-900">₹0.00</p>
+                            <p className="text-slate-400 font-medium">Yearly Total</p>
+                            <p className="text-xl font-bold text-white">₹0.00</p>
                         </div>
                     </div>
                 </div>
@@ -311,35 +311,36 @@ export default function BurnDownChart() {
                 <div className="h-[250px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                             <XAxis
                                 dataKey="name"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 12, fill: '#64748b' }}
+                                tick={{ fontSize: 12, fill: '#94a3b8' }}
                                 dy={10}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 12, fill: '#64748b' }}
+                                tick={{ fontSize: 12, fill: '#94a3b8' }}
                                 tickFormatter={(val) => `₹${val}`}
                             />
                             <Tooltip
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                                contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
+                                itemStyle={{ color: '#e4e4e7' }}
                                 formatter={(value: any, name: string | undefined) => {
                                     if (name === 'Potential Spend') return [`₹${Number(value).toFixed(2)}`, 'Without Cancellations'];
                                     return [`₹${Number(value).toFixed(2)}`, name || ''];
                                 }}
                             />
-                            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#cbd5e1' }} />
 
                             {/* Cancellations Line - Solid/Dotted Red */}
                             <Line
                                 name="Potential Spend"
                                 type="monotone"
                                 dataKey="WithCancellations"
-                                stroke="#ef4444"
+                                stroke="#f87171"
                                 strokeWidth={2}
                                 strokeDasharray="4 4"
                                 dot={false}
@@ -355,11 +356,11 @@ export default function BurnDownChart() {
     return (
         <div className="card space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="text-xl font-semibold">Spend Projection</h2>
+                <h2 className="text-xl font-semibold text-slate-100">Spend Projection</h2>
                 <div className="flex gap-6 text-sm">
                     <div>
-                        <p className="text-slate-500 font-medium">Monthly Avg</p>
-                        <p className="text-xl font-bold text-slate-900">
+                        <p className="text-slate-400 font-medium">Monthly Avg</p>
+                        <p className="text-xl font-bold text-white">
                             ₹{monthlyRate.toFixed(2)}
                             {profile?.monthly_income ? (
                                 <span className="text-sm font-normal text-slate-500 ml-2">
@@ -369,8 +370,8 @@ export default function BurnDownChart() {
                         </p>
                     </div>
                     <div>
-                        <p className="text-slate-500 font-medium">Yearly Total</p>
-                        <p className="text-xl font-bold text-slate-900">₹{yearlyRate.toFixed(2)}</p>
+                        <p className="text-slate-400 font-medium">Yearly Total</p>
+                        <p className="text-xl font-bold text-white">₹{yearlyRate.toFixed(2)}</p>
                     </div>
                 </div>
             </div>
@@ -378,37 +379,38 @@ export default function BurnDownChart() {
             <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                         <XAxis
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: '#64748b' }}
+                            tick={{ fontSize: 12, fill: '#94a3b8' }}
                             dy={10}
                         />
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 12, fill: '#64748b' }}
+                            tick={{ fontSize: 12, fill: '#94a3b8' }}
                             tickFormatter={(val) => `₹${val}`}
                         />
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
+                            itemStyle={{ color: '#e4e4e7' }}
                             formatter={(value: any, name: string | undefined) => {
                                 if (name === 'Potential Spend') return [`₹${Number(value).toFixed(2)}`, 'Without Cancellations'];
                                 return [`₹${Number(value).toFixed(2)}`, name || ''];
                             }}
                         />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#cbd5e1' }} />
 
                         {/* Historic Line - Solid Blue */}
                         <Line
                             name="History"
                             type="monotone"
                             dataKey="History"
-                            stroke="#3b82f6"
+                            stroke="#60a5fa"
                             strokeWidth={3}
-                            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
+                            dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
                             activeDot={{ r: 6 }}
                             connectNulls
                         />
@@ -418,10 +420,10 @@ export default function BurnDownChart() {
                             name="Forecast"
                             type="monotone"
                             dataKey="Forecast"
-                            stroke="#3b82f6"
+                            stroke="#60a5fa"
                             strokeWidth={3}
                             strokeDasharray="5 5"
-                            dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }}
+                            dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
                             activeDot={{ r: 6 }}
                             connectNulls
                         />
@@ -431,7 +433,7 @@ export default function BurnDownChart() {
                             name="Potential Spend"
                             type="monotone"
                             dataKey="WithCancellations"
-                            stroke="#ef4444"
+                            stroke="#f87171"
                             strokeWidth={2}
                             strokeDasharray="4 4"
                             dot={false}

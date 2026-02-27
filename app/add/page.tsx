@@ -13,7 +13,7 @@ export default function AddSubscriptionPage() {
 
             <div className="card">
                 <div className="mb-4">
-                    <p className="text-slate-600 text-sm">
+                    <p className="text-slate-400 text-sm">
                         Manually enter a subscription below. This will be stored securely in your local database.
                     </p>
                 </div>

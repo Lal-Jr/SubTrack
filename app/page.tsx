@@ -9,7 +9,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold gradient-title">Dashboard</h1>
-          <p className="text-sm text-slate-500">Welcome to Subtrack. Let's build this piece by piece.</p>
+          <p className="text-sm text-slate-400">Welcome to Subtrack. Let's build this piece by piece.</p>
         </div>
       </div>
 

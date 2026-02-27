@@ -189,11 +189,11 @@ export default function SubscriptionTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end mb-2">
                 <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
-                    className="input py-1 px-3 text-sm max-w-xs"
+                    className="input py-1.5 px-3 text-sm max-w-[160px] bg-white/5 border-white/10"
                 >
                     <option value="all">All Subscriptions</option>
                     <option value="active">Active</option>
@@ -203,62 +203,69 @@ export default function SubscriptionTable() {
                 </select>
             </div>
 
-            <div className="overflow-x-auto ring-1 ring-slate-200 rounded-lg">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50">
-                        <tr className="border-b border-slate-200">
-                            <th className="p-3 font-semibold text-slate-700">Merchant</th>
-                            <th className="p-3 font-semibold text-slate-700">Amount</th>
-                            <th className="p-3 font-semibold text-slate-700 hidden sm:table-cell">Interval</th>
-                            <th className="p-3 font-semibold text-slate-700">Next Charge</th>
-                            <th className="p-3 font-semibold text-slate-700 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredAndSortedSubscriptions.length > 0 ? (
-                            filteredAndSortedSubscriptions.map((sub) => {
-                                const isActive = sub.active !== 0;
-                                return (
-                                    <tr key={sub.id} className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors ${!isActive ? 'opacity-60' : ''}`}>
-                                        <td className="p-3 font-medium text-slate-900">
+            <div className="flex flex-col gap-3">
+                {filteredAndSortedSubscriptions.length > 0 ? (
+                    filteredAndSortedSubscriptions.map((sub) => {
+                        const isActive = sub.active !== 0;
+                        return (
+                            <div
+                                key={sub.id}
+                                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isActive
+                                        ? 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
+                                        : 'border-white/5 bg-black/20 opacity-60 grayscale'
+                                    }`}
+                            >
+                                {/* Left Side: Merchant & Amount */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center font-bold text-indigo-300 text-lg">
+                                        {sub.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-100 flex items-center gap-2">
                                             {sub.name}
-                                            {!isActive && <span className="ml-2 text-xs font-normal text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Cancelled</span>}
-                                        </td>
-                                        <td className="p-3 text-slate-700">{sub.amount} {sub.currency}</td>
-                                        <td className="p-3 text-slate-700 hidden sm:table-cell">
-                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                                {formatInterval(sub.interval_count, sub.interval_unit)}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-slate-700">
-                                            {isActive ? getRelativeTime(sub.next_charge_date) : '-'}
-                                            <div className="text-xs text-slate-400 mt-0.5">
-                                                {sub.next_charge_date ? new Date(sub.next_charge_date).toLocaleDateString() : ''}
-                                            </div>
-                                        </td>
-                                        <td className="p-3 text-right">
-                                            <button
-                                                onClick={() => toggleSubscriptionStatus(sub.id, sub.active)}
-                                                className={`text-xs px-3 py-1 rounded border transition-colors ${isActive
-                                                    ? 'border-slate-200 text-slate-600 hover:bg-slate-100'
-                                                    : 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                                                    }`}
-                                            >
-                                                {isActive ? 'Cancel' : 'Restore'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        ) : (
-                            <tr>
-                                <td colSpan={5} className="p-4 text-center text-slate-500">
-                                    No subscriptions match the selected filter.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                                        </h3>
+                                        <p className="text-sm text-slate-400 mt-0.5 font-medium">
+                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: sub.currency }).format(sub.amount)}{' '}
+                                            <span className="text-slate-500 font-normal ml-1">• {formatInterval(sub.interval_count, sub.interval_unit)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Status & Actions */}
+                                <div className="flex items-center gap-5 md:gap-8 text-right">
+                                    <div className="hidden sm:block">
+                                        <p className="text-sm font-medium text-slate-200">
+                                            {!isActive ? (
+                                                <span className="text-red-400">Cancelled</span>
+                                            ) : (
+                                                getRelativeTime(sub.next_charge_date)
+                                            )}
+                                        </p>
+                                        {isActive && (
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                {sub.next_charge_date ? new Date(sub.next_charge_date).toLocaleDateString() : 'N/A'}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={() => toggleSubscriptionStatus(sub.id, sub.active)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 border ${isActive
+                                                ? 'border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                                                : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300'
+                                            }`}
+                                    >
+                                        {isActive ? 'Cancel' : 'Restore'}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-white/10 bg-white/5">
+                        <p className="text-slate-400">No subscriptions match the selected filter.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

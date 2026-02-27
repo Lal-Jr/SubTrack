@@ -87,11 +87,11 @@ export default function ProfileForm() {
     if (loading) {
         return (
             <div className="animate-pulse space-y-4 max-w-lg card p-6">
-                <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                <div className="h-10 bg-slate-200 rounded w-full"></div>
-                <div className="h-4 bg-slate-200 rounded w-1/4 mt-4"></div>
-                <div className="h-10 bg-slate-200 rounded w-full"></div>
-                <div className="h-10 bg-slate-200 rounded w-full mt-6"></div>
+                <div className="h-4 bg-white/10 rounded w-1/4"></div>
+                <div className="h-10 bg-white/5 rounded w-full"></div>
+                <div className="h-4 bg-white/10 rounded w-1/4 mt-4"></div>
+                <div className="h-10 bg-white/5 rounded w-full"></div>
+                <div className="h-10 bg-white/5 rounded w-full mt-6"></div>
             </div>
         );
     }
@@ -113,7 +113,7 @@ export default function ProfileForm() {
             <div>
                 <label htmlFor="monthlyIncome" className="label block mb-1">Monthly Income</label>
                 <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
                         {currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
                     </span>
                     <input
@@ -131,7 +131,7 @@ export default function ProfileForm() {
                         placeholder="0.00"
                     />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Used to calculate subscription vs income ratio.</p>
+                <p className="text-xs text-slate-400 mt-1">Used to calculate subscription vs income ratio.</p>
             </div>
 
             <div>

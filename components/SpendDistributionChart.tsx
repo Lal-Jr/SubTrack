@@ -21,7 +21,7 @@ type Subscription = {
     active?: number;
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
+const COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#94a3b8'];
 
 export default function SpendDistributionChart() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -146,8 +146,8 @@ export default function SpendDistributionChart() {
     if (loading) {
         return (
             <div className="card p-6 animate-pulse h-full">
-                <div className="h-6 bg-slate-200 rounded w-1/2 mb-4"></div>
-                <div className="h-40 bg-slate-100 rounded w-full rounded-full w-40 h-40 mx-auto"></div>
+                <div className="h-6 bg-white/10 rounded w-1/2 mb-4"></div>
+                <div className="bg-white/5 rounded-full w-40 h-40 mx-auto"></div>
             </div>
         );
     }
@@ -155,9 +155,9 @@ export default function SpendDistributionChart() {
     if (chartData.length === 0) {
         return (
             <div className="card space-y-4 h-full flex flex-col">
-                <h2 className="text-xl font-semibold">Spend Breakdown</h2>
-                <div className="flex-1 flex items-center justify-center border border-dashed border-slate-300 rounded-lg py-12">
-                    <p className="text-slate-500 text-sm">No active subscriptions to analyze.</p>
+                <h2 className="text-xl font-semibold text-slate-100">Spend Breakdown</h2>
+                <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-lg py-12">
+                    <p className="text-slate-400 text-sm">No active subscriptions to analyze.</p>
                 </div>
             </div>
         );
@@ -165,7 +165,7 @@ export default function SpendDistributionChart() {
 
     return (
         <div className="card space-y-4 h-full flex flex-col">
-            <h2 className="text-xl font-semibold">Spend Breakdown <span className="text-xs font-normal text-slate-500 ml-2">(Monthly Avg)</span></h2>
+            <h2 className="text-xl font-semibold text-slate-100">Spend Breakdown <span className="text-xs font-normal text-slate-400 ml-2">(Monthly Avg)</span></h2>
 
             <div className="flex-1 min-h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -178,16 +178,18 @@ export default function SpendDistributionChart() {
                             outerRadius={80}
                             paddingAngle={5}
                             dataKey="value"
+                            stroke="none"
                         >
                             {chartData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
+                            itemStyle={{ color: '#e4e4e7' }}
                             formatter={(value: number | undefined) => [`₹${(value || 0).toFixed(2)}`, 'Monthly Equivalent']}
                         />
-                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                        <Legend wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }} />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
