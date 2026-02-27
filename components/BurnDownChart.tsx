@@ -354,8 +354,8 @@ export default function BurnDownChart() {
     }
 
     return (
-        <div className="card space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col h-full w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 flex-none">
                 <h2 className="text-xl font-semibold text-slate-100">Spend Projection</h2>
                 <div className="flex gap-6 text-sm">
                     <div>
@@ -376,71 +376,73 @@ export default function BurnDownChart() {
                 </div>
             </div>
 
-            <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis
-                            dataKey="name"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 12, fill: '#94a3b8' }}
-                            dy={10}
-                        />
-                        <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 12, fill: '#94a3b8' }}
-                            tickFormatter={(val) => `₹${val}`}
-                        />
-                        <Tooltip
-                            contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
-                            itemStyle={{ color: '#e4e4e7' }}
-                            formatter={(value: any, name: string | undefined) => {
-                                if (name === 'Potential Spend') return [`₹${Number(value).toFixed(2)}`, 'Without Cancellations'];
-                                return [`₹${Number(value).toFixed(2)}`, name || ''];
-                            }}
-                        />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#cbd5e1' }} />
+            <div className="flex-1 min-h-[200px] w-full relative">
+                <div className="absolute inset-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: '#94a3b8' }}
+                                dy={10}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 12, fill: '#94a3b8' }}
+                                tickFormatter={(val) => `₹${val}`}
+                            />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
+                                itemStyle={{ color: '#e4e4e7' }}
+                                formatter={(value: any, name: string | undefined) => {
+                                    if (name === 'Potential Spend') return [`₹${Number(value).toFixed(2)}`, 'Without Cancellations'];
+                                    return [`₹${Number(value).toFixed(2)}`, name || ''];
+                                }}
+                            />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#cbd5e1' }} />
 
-                        {/* Historic Line - Solid Blue */}
-                        <Line
-                            name="History"
-                            type="monotone"
-                            dataKey="History"
-                            stroke="#60a5fa"
-                            strokeWidth={3}
-                            dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
-                            activeDot={{ r: 6 }}
-                            connectNulls
-                        />
+                            {/* Historic Line - Solid Blue */}
+                            <Line
+                                name="History"
+                                type="monotone"
+                                dataKey="History"
+                                stroke="#60a5fa"
+                                strokeWidth={3}
+                                dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
+                                activeDot={{ r: 6 }}
+                                connectNulls
+                            />
 
-                        {/* Forecast Line - Dotted Blue */}
-                        <Line
-                            name="Forecast"
-                            type="monotone"
-                            dataKey="Forecast"
-                            stroke="#60a5fa"
-                            strokeWidth={3}
-                            strokeDasharray="5 5"
-                            dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
-                            activeDot={{ r: 6 }}
-                            connectNulls
-                        />
+                            {/* Forecast Line - Dotted Blue */}
+                            <Line
+                                name="Forecast"
+                                type="monotone"
+                                dataKey="Forecast"
+                                stroke="#60a5fa"
+                                strokeWidth={3}
+                                strokeDasharray="5 5"
+                                dot={{ r: 4, fill: '#60a5fa', strokeWidth: 0 }}
+                                activeDot={{ r: 6 }}
+                                connectNulls
+                            />
 
-                        {/* Cancellations Line - Solid/Dotted Red */}
-                        <Line
-                            name="Potential Spend"
-                            type="monotone"
-                            dataKey="WithCancellations"
-                            stroke="#f87171"
-                            strokeWidth={2}
-                            strokeDasharray="4 4"
-                            dot={false}
-                            connectNulls
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
+                            {/* Cancellations Line - Solid/Dotted Red */}
+                            <Line
+                                name="Potential Spend"
+                                type="monotone"
+                                dataKey="WithCancellations"
+                                stroke="#f87171"
+                                strokeWidth={2}
+                                strokeDasharray="4 4"
+                                dot={false}
+                                connectNulls
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );

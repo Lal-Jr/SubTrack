@@ -188,8 +188,8 @@ export default function SubscriptionTable() {
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-end mb-2">
+        <div className="flex flex-col h-full w-full max-h-full">
+            <div className="flex justify-end mb-3 flex-none sticky top-0 z-10 bg-black/20 backdrop-blur-md rounded-lg p-2 border border-white/5">
                 <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
@@ -203,7 +203,7 @@ export default function SubscriptionTable() {
                 </select>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 flex-1 overflow-y-auto pb-4 custom-scrollbar">
                 {filteredAndSortedSubscriptions.length > 0 ? (
                     filteredAndSortedSubscriptions.map((sub) => {
                         const isActive = sub.active !== 0;
@@ -211,8 +211,8 @@ export default function SubscriptionTable() {
                             <div
                                 key={sub.id}
                                 className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isActive
-                                        ? 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
-                                        : 'border-white/5 bg-black/20 opacity-60 grayscale'
+                                    ? 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10'
+                                    : 'border-white/5 bg-black/20 opacity-60 grayscale'
                                     }`}
                             >
                                 {/* Left Side: Merchant & Amount */}
@@ -250,9 +250,9 @@ export default function SubscriptionTable() {
 
                                     <button
                                         onClick={() => toggleSubscriptionStatus(sub.id, sub.active)}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 border ${isActive
-                                                ? 'border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
-                                                : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300'
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 border w-[80px] ${isActive
+                                            ? 'border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                                            : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300'
                                             }`}
                                     >
                                         {isActive ? 'Cancel' : 'Restore'}
@@ -262,7 +262,7 @@ export default function SubscriptionTable() {
                         );
                     })
                 ) : (
-                    <div className="p-8 text-center rounded-xl border border-dashed border-white/10 bg-white/5">
+                    <div className="p-8 text-center rounded-xl border border-dashed border-white/10 bg-white/5 mt-4">
                         <p className="text-slate-400">No subscriptions match the selected filter.</p>
                     </div>
                 )}

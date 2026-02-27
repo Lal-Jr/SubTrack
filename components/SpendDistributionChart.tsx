@@ -154,9 +154,9 @@ export default function SpendDistributionChart() {
 
     if (chartData.length === 0) {
         return (
-            <div className="card space-y-4 h-full flex flex-col">
-                <h2 className="text-xl font-semibold text-slate-100">Spend Breakdown</h2>
-                <div className="flex-1 flex items-center justify-center border border-dashed border-white/10 rounded-lg py-12">
+            <div className="flex flex-col h-full w-full">
+                <h2 className="text-xl font-semibold text-slate-100 flex-none mb-4">Spend Breakdown</h2>
+                <div className="flex-1 min-h-[150px] flex items-center justify-center border border-dashed border-white/10 rounded-lg">
                     <p className="text-slate-400 text-sm">No active subscriptions to analyze.</p>
                 </div>
             </div>
@@ -164,34 +164,36 @@ export default function SpendDistributionChart() {
     }
 
     return (
-        <div className="card space-y-4 h-full flex flex-col">
-            <h2 className="text-xl font-semibold text-slate-100">Spend Breakdown <span className="text-xs font-normal text-slate-400 ml-2">(Monthly Avg)</span></h2>
+        <div className="flex flex-col h-full w-full">
+            <h2 className="text-xl font-semibold text-slate-100 flex-none mb-4">Spend Breakdown <span className="text-xs font-normal text-slate-400 ml-2">(Monthly Avg)</span></h2>
 
-            <div className="flex-1 min-h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            stroke="none"
-                        >
-                            {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip
-                            contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
-                            itemStyle={{ color: '#e4e4e7' }}
-                            formatter={(value: number | undefined) => [`₹${(value || 0).toFixed(2)}`, 'Monthly Equivalent']}
-                        />
-                        <Legend wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }} />
-                    </PieChart>
-                </ResponsiveContainer>
+            <div className="flex-1 min-h-[150px] w-full relative">
+                <div className="absolute inset-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                                stroke="none"
+                            >
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
+                                itemStyle={{ color: '#e4e4e7' }}
+                                formatter={(value: number | undefined) => [`₹${(value || 0).toFixed(2)}`, 'Monthly Equivalent']}
+                            />
+                            <Legend wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );

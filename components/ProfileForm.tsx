@@ -97,60 +97,62 @@ export default function ProfileForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg card p-6">
-            <div>
-                <label htmlFor="name" className="label block mb-1">Name</label>
-                <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="input w-full"
-                    placeholder="Your Name (e.g. Harish)"
-                />
-            </div>
-
-            <div>
-                <label htmlFor="monthlyIncome" className="label block mb-1">Monthly Income</label>
-                <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
-                        {currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
-                    </span>
+        <form onSubmit={handleSubmit} className="flex flex-col h-full w-full">
+            <div className="space-y-5 flex-1">
+                <div>
+                    <label htmlFor="name" className="label block mb-1">Name</label>
                     <input
                         type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*\.?[0-9]*"
-                        id="monthlyIncome"
-                        value={monthlyIncome}
-                        onChange={(e) => {
-                            if (e.target.value === '' || /^[0-9]*\.?[0-9]*$/.test(e.target.value)) {
-                                setMonthlyIncome(e.target.value);
-                            }
-                        }}
-                        className="input w-full pl-8"
-                        placeholder="0.00"
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="input w-full"
+                        placeholder="Your Name (e.g. Harish)"
                     />
                 </div>
-                <p className="text-xs text-slate-400 mt-1">Used to calculate subscription vs income ratio.</p>
+
+                <div>
+                    <label htmlFor="monthlyIncome" className="label block mb-1">Monthly Income</label>
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                            {currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
+                        </span>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*\.?[0-9]*"
+                            id="monthlyIncome"
+                            value={monthlyIncome}
+                            onChange={(e) => {
+                                if (e.target.value === '' || /^[0-9]*\.?[0-9]*$/.test(e.target.value)) {
+                                    setMonthlyIncome(e.target.value);
+                                }
+                            }}
+                            className="input w-full pl-8"
+                            placeholder="0.00"
+                        />
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">Used to calculate subscription vs income ratio.</p>
+                </div>
+
+                <div>
+                    <label htmlFor="currency" className="label block mb-1">Preferred Currency</label>
+                    <select
+                        id="currency"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="input w-full"
+                    >
+                        <option value="INR">INR (₹)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                </div>
             </div>
 
-            <div>
-                <label htmlFor="currency" className="label block mb-1">Preferred Currency</label>
-                <select
-                    id="currency"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="input w-full"
-                >
-                    <option value="INR">INR (₹)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                </select>
-            </div>
-
-            <div className="pt-4 flex justify-end">
-                <button type="submit" disabled={saving} className="btn w-full justify-center min-w-[120px]">
+            <div className="pt-6 flex justify-end flex-none mt-auto">
+                <button type="submit" disabled={saving} className="btn w-full sm:w-auto justify-center min-w-[120px]">
                     {saving ? 'Saving...' : 'Save Profile'}
                 </button>
             </div>

@@ -427,8 +427,7 @@ export default function CSVUploadComponent() {
     };
 
     return (
-        <div className="card p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-4">Bank Statement Upload</h2>
+        <div className="flex flex-col h-full w-full">
 
             {step === 'upload' && (
                 <div className="space-y-4">
@@ -443,7 +442,7 @@ export default function CSVUploadComponent() {
                         </p>
                     )}
 
-                    <div className="border-2 border-dashed border-slate-700/50 rounded-xl p-8 text-center hover:bg-white/[0.02] transition-colors">
+                    <div className="border border-dashed border-white/10 rounded-xl p-8 text-center hover:bg-white/[0.04] transition-colors bg-white/[0.01]">
                         <input
                             type="file"
                             accept=".csv,.pdf"
@@ -453,7 +452,7 @@ export default function CSVUploadComponent() {
                         />
                         <button
                             type="button"
-                            className="btn"
+                            className="btn btn-secondary"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={loading}
                         >

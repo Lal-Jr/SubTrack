@@ -33,16 +33,16 @@ export default function RootLayout({
         <meta name="theme-color" content="#2563eb" />
         <link rel="icon" href="/icon.svg" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen overflow-hidden flex flex-col bg-slate-950 text-slate-50`}>
         <DBInit />
         <div className="bg-blob blob-1" />
         <div className="bg-blob blob-2" />
         <div className="bg-blob blob-3" />
-        <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-3 pt-4">
-          <span className="text-base font-semibold gradient-title">Subtrack</span>
+        <header className="flex w-full items-center justify-between px-6 py-4 shrink-0 bg-slate-900/50 backdrop-blur-md border-b border-slate-800/50 relative z-10">
+          <Link href="/" className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Subtrack</Link>
           <Link className="nav-pill" href="/profile">Profile</Link>
         </header>
-        <main className="mx-auto w-full max-w-6xl px-3 py-4">{children}</main>
+        <main className="flex-1 w-full overflow-hidden relative z-10">{children}</main>
       </body>
     </html>
   );
