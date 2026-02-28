@@ -1,16 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Papa from 'papaparse';
-import * as pdfjsLib from 'pdfjs-dist';
 import { db } from '@/lib/powersync';
 import { useRouter } from 'next/navigation';
-
-// Configure the PDF.js worker to use the local file instead of CDN
-// This avoids CORS and Next.js Turbopack blocking issues.
-if (typeof window !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-}
+import { detectRecurringSubscriptions, Transaction as DetectionTransaction } from '@/lib/subscriptionDetection';
+import { parseStatement } from '@/lib/statementParser';
 
 interface ParsedTransaction {
     date: Date;
@@ -75,293 +69,67 @@ export default function CSVUploadComponent() {
 
         setLoading(true);
 
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-            try {
-                await processPdf(file);
-            } catch (error) {
-                console.error("PDF Parse Error", error);
-                alert("Failed to parse PDF file.");
-                setLoading(false);
-            }
-        } else {
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: (results: any) => {
-                    analyzeTransactions(results.data as Record<string, string>[]);
-                },
-                error: (err: any) => {
-                    console.error("CSV Parse Error", err);
-                    alert("Failed to parse CSV file.");
-                    setLoading(false);
-                }
-            });
-        }
-    };
-
-    const processPdf = async (file: File) => {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const numPages = pdf.numPages;
-
-        const extractedTransactions: ParsedTransaction[] = [];
-
-        // This is a heuristic regex. It looks for lines that start with a date (e.g. 12/05 or 12/05/2026 or 12-05)
-        // and end with a number (amount).
-        // e.g., "12/05/2026   Netflix Subscription   15.99"
-        const lineRegex = /^(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)\s+(.*?)\s+([\d,\.]+)$/;
-
-        for (let i = 1; i <= numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-
-            // Reconstruct text lines. PDFjs returns chunks with x, y coordinates.
-            // We'll group by "y" coordinate to form lines.
-            const linesMap: Record<number, string[]> = {};
-
-            textContent.items.forEach((item: any) => {
-                if (item.str && item.str.trim() !== '') {
-                    // Round y to group items on roughly the same line
-                    const y = Math.round(item.transform[5] / 5) * 5;
-                    if (!linesMap[y]) linesMap[y] = [];
-                    linesMap[y].push(item.str.trim());
-                }
-            });
-
-            // Sort Y descending (top to bottom)
-            const sortedY = Object.keys(linesMap).map(Number).sort((a, b) => b - a);
-
-            for (const y of sortedY) {
-                const line = linesMap[y].join(' ').replace(/\s{2,}/g, ' '); // Normalize multiple spaces
-                const match = line.match(lineRegex);
-
-                if (match) {
-                    const [_, dateStr, descStr, amountStr] = match;
-
-                    const cleanAmount = parseFloat(amountStr.replace(/,/g, '').replace(/[^0-9.-]+/g, ""));
-                    const amount = Math.abs(cleanAmount);
-
-                    let date = new Date(dateStr);
-                    const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-
-                    if (parts.length === 3) {
-                        let year = parseInt(parts[2]);
-                        if (year < 100) year += 2000;
-
-                        let month, day;
-                        if (parseInt(parts[0]) > 12) { // Definitely DD/MM
-                            day = parseInt(parts[0]);
-                            month = parseInt(parts[1]) - 1;
-                        } else if (parseInt(parts[1]) > 12) { // Definitely MM/DD
-                            month = parseInt(parts[0]) - 1;
-                            day = parseInt(parts[1]);
-                        } else {
-                            // Ambiguous (e.g. 01/02/2026). Assume DD/MM/YYYY in this locale
-                            day = parseInt(parts[0]);
-                            month = parseInt(parts[1]) - 1;
-                        }
-
-                        date = new Date(Date.UTC(year, month, day));
-                    } else if (dateStr.length <= 5) {
-                        // MM/DD or DD/MM missing year
-                        const currentYear = new Date().getFullYear();
-                        const parseParts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-                        if (parseParts.length === 2) {
-                            const p1 = parseInt(parseParts[0]);
-                            const p2 = parseInt(parseParts[1]);
-                            if (p1 > 12) date = new Date(Date.UTC(currentYear, p2 - 1, p1)); // DD/MM
-                            else date = new Date(Date.UTC(currentYear, p2 - 1, p1)); // Assume DD/MM
-                        }
-                    }
-
-                    if (!isNaN(date.getTime()) && !isNaN(amount) && amount > 0) {
-                        extractedTransactions.push({
-                            date,
-                            description: descStr,
-                            amount
-                        });
-                    }
-                }
-            }
-        }
-
-        await analyzeParsedTransactions(extractedTransactions);
-    };
-
-    const guessColumns = (row: Record<string, string>) => {
-        const keys = Object.keys(row);
-        let dateCol, descCol, amountCol;
-
-        for (const key of keys) {
-            const lowerDate = key.toLowerCase();
-            if (lowerDate.includes('date')) dateCol = key;
-            if (lowerDate.includes('desc') || lowerDate.includes('detail') || lowerDate.includes('narrative') || lowerDate.includes('payee')) descCol = key;
-            if (lowerDate.includes('amount') || lowerDate.includes('withdrawal') || lowerDate.includes('debit')) amountCol = key;
-        }
-
-        return { dateCol, descCol, amountCol };
-    };
-
-    const analyzeTransactions = async (data: Record<string, string>[]) => {
-        if (data.length === 0) {
-            setLoading(false);
-            return;
-        }
-
-        const cols = guessColumns(data[0]);
-
-        if (!cols.dateCol || !cols.descCol || !cols.amountCol) {
-            alert("Could not automatically determine Date, Description, and Amount columns. Please ensure standard headers are used.");
-            setLoading(false);
-            return;
-        }
-
-        const transactions: ParsedTransaction[] = [];
-
-        // Parse raw transactions
-        data.forEach(row => {
-            const dateStr = row[cols.dateCol as string];
-            const descStr = row[cols.descCol as string];
-            const amountStr = row[cols.amountCol as string];
-
-            if (dateStr && descStr && amountStr) {
-                // Remove commas from amount (e.g. 1,000.00 -> 1000.00)
-                const cleanAmount = parseFloat(amountStr.replace(/,/g, '').replace(/[^0-9.-]+/g, ""));
-                // Some banks use positive for withdrawals, some negative. Let's assume we take absolute value but mostly look for debits.
-                // If there's a separate Credit/Debit column, it's trickier. We will assume the amount has sign or we just take absolute.
-                const amount = Math.abs(cleanAmount);
-
-                let date = new Date(dateStr);
-                const parts = dateStr.includes('/') ? dateStr.split('/') : dateStr.split('-');
-
-                if (parts.length === 3) {
-                    let year = parseInt(parts[2]);
-                    if (year < 100) year += 2000;
-
-                    let month, day;
-                    if (parseInt(parts[0]) > 12) { // Definitely DD/MM
-                        day = parseInt(parts[0]);
-                        month = parseInt(parts[1]) - 1;
-                    } else if (parseInt(parts[1]) > 12) { // Definitely MM/DD
-                        month = parseInt(parts[0]) - 1;
-                        day = parseInt(parts[1]);
-                    } else {
-                        // Ambiguous. Assume DD/MM/YYYY
-                        day = parseInt(parts[0]);
-                        month = parseInt(parts[1]) - 1;
-                    }
-
-                    date = new Date(Date.UTC(year, month, day));
-                }
-
-                if (!isNaN(date.getTime()) && !isNaN(amount) && amount > 0) {
-                    transactions.push({
-                        date,
-                        description: descStr,
-                        amount
-                    });
-                }
-            }
-        });
-
-        await analyzeParsedTransactions(transactions);
-    };
-
-    const analyzeParsedTransactions = async (transactions: ParsedTransaction[]) => {
-        if (transactions.length === 0) {
-            setLoading(false);
-            alert("No valid transactions found in the file.");
-            return;
-        }
-
-        // Group by similarity
-        const groups: Record<string, ParsedTransaction[]> = {};
-
-        transactions.forEach(t => {
-            // Simplify description: remove numbers, standard words, lowercase
-            let norm = t.description.toLowerCase()
-                .replace(/[0-9]+/g, '')
-                .replace(/pvt|ltd|upi|card|txn|ref/g, '')
-                .replace(/[^a-z]+/g, ' ')
-                .trim();
-
-            // Further simplify to first two significant words if possible to group better
-            const words = norm.split(' ').filter(w => w.length > 2);
-            let key = words.slice(0, 2).join(' ');
-            if (!key) key = norm; // fallback
-
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(t);
-        });
-
-        const distinctSubscriptions: FoundSubscription[] = [];
-
-        Object.keys(groups).forEach(key => {
-            const txns = groups[key];
-            if (txns.length < 2) return; // Need at least 2 to find a pattern
-
-            // Sort by date ascending
-            txns.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-            let isRecurring = true;
-            let avgDays = 0;
-
-            for (let i = 1; i < txns.length; i++) {
-                const diffTime = Math.abs(txns[i].date.getTime() - txns[i - 1].date.getTime());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                // Check if roughly monthly (20 to 40 days to allow for February and long months)
-                if (diffDays < 20 || diffDays > 40) {
-                    isRecurring = false;
-                    break;
-                }
-                avgDays += diffDays;
-            }
-
-            if (isRecurring) {
-                // It looks like a monthly subscription
-                const latestTxn = txns[txns.length - 1];
-
-                // Predict next charge date (approx 1 month from latest)
-                const nextDate = new Date(latestTxn.date);
-                nextDate.setMonth(nextDate.getMonth() + 1);
-
-                distinctSubscriptions.push({
-                    id: crypto.randomUUID(),
-                    name: latestTxn.description.substring(0, 30).trim(), // Original recognizable name
-                    amount: latestTxn.amount,
-                    currency: 'INR', // Defaulting for now
-                    intervalType: 'monthly',
-                    nextChargeDate: nextDate.toISOString().split('T')[0],
-                    selected: true,
-                });
-            }
-        });
-
-        // Fetch existing subscriptions to deduplicate
-        let existingSubscriptions: { name: string, amount: number }[] = [];
         try {
-            const res = await db.getAll('SELECT name, amount FROM subscriptions');
-            existingSubscriptions = res as { name: string, amount: number }[];
-        } catch (err) {
-            console.error("Could not fetch existing subscriptions for deduplication", err);
-        }
+            // 1. Parse statement into standardized Transactions
+            const rawTransactions = await parseStatement(file);
 
-        // Filter out subscriptions that already exist in DB (matching near name or exact amount)
-        const newSubscriptions = distinctSubscriptions.filter(newSub => {
-            const isDuplicate = existingSubscriptions.some(ex => {
-                const nameMatch = ex.name.toLowerCase().includes(newSub.name.toLowerCase()) ||
-                    newSub.name.toLowerCase().includes(ex.name.toLowerCase());
-                const amountMatch = Math.abs(ex.amount - newSub.amount) < 1; // within 1 unit
-                return nameMatch && amountMatch;
+            if (rawTransactions.length === 0) {
+                setLoading(false);
+                alert("No valid transactions found in the file.");
+                return;
+            }
+
+            // 2. Map parser Transaction directly to the DetectionTransaction expected by the module
+            const detectionInput: DetectionTransaction[] = rawTransactions.map(t => ({
+                date: t.date, // already an ISO string
+                description: t.description,
+                amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount)
+            }));
+
+            // 3. Run the recurring subscription detection module
+            const detectedSubs = detectRecurringSubscriptions(detectionInput);
+
+            // 4. Map the module format to our UI state format
+            const distinctSubscriptions: FoundSubscription[] = detectedSubs.map(ds => ({
+                id: crypto.randomUUID(),
+                name: ds.merchant,
+                amount: ds.averageAmount,
+                currency: 'INR', // Defaulting for now
+                intervalType: ds.frequency.toLowerCase(),
+                nextChargeDate: ds.nextExpectedPayment.split('T')[0],
+                selected: true,
+            }));
+
+            // 5. Fetch existing subscriptions to deduplicate
+            let existingSubscriptions: { name: string, amount: number }[] = [];
+            try {
+                const res = await db.getAll('SELECT name, amount FROM subscriptions');
+                existingSubscriptions = res as { name: string, amount: number }[];
+            } catch (err) {
+                console.error("Could not fetch existing subscriptions for deduplication", err);
+            }
+
+            // 6. Filter out subscriptions that already exist in DB
+            const newSubscriptions = distinctSubscriptions.filter(newSub => {
+                const isDuplicate = existingSubscriptions.some(ex => {
+                    const nameMatch = ex.name.toLowerCase().includes(newSub.name.toLowerCase()) ||
+                        newSub.name.toLowerCase().includes(ex.name.toLowerCase());
+                    const amountMatch = Math.abs(ex.amount - newSub.amount) < 1; // within 1 unit
+                    return nameMatch && amountMatch;
+                });
+                return !isDuplicate;
             });
-            return !isDuplicate;
-        });
 
-        setFoundSubscriptions(newSubscriptions);
-        setStep('review');
-        setLoading(false);
+            setFoundSubscriptions(newSubscriptions);
+            setStep('review');
+        } catch (error: any) {
+            console.error("Statement Parsing Error", error);
+            alert(error.message || "Failed to parse the statement.");
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     const toggleSelection = (id: string) => {
         setFoundSubscriptions(prev =>

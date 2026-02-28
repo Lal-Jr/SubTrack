@@ -2,14 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/powersync';
-import {
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip,
-    ResponsiveContainer,
-    Legend
-} from 'recharts';
 
 type Subscription = {
     id: string;
@@ -20,8 +12,6 @@ type Subscription = {
     interval_unit: string;
     active?: number;
 };
-
-const COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#94a3b8'];
 
 export default function SpendDistributionChart() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -83,11 +73,11 @@ export default function SpendDistributionChart() {
         };
     }, []);
 
-    const chartData = useMemo(() => {
+    const impactSegments = useMemo(() => {
         const activeSubscriptions = subscriptions.filter(s => s.active !== 0);
 
         if (activeSubscriptions.length === 0) {
-            return [];
+            return null;
         }
 
         // Calculate normalized monthly cost for each sub
@@ -97,20 +87,15 @@ export default function SpendDistributionChart() {
             const unit = sub.interval_unit || 'month';
 
             let chargesPerYear = 0;
-            if (unit === 'day') {
-                chargesPerYear = 365 / count;
-            } else if (unit === 'week') {
-                chargesPerYear = 52 / count;
-            } else if (unit === 'month') {
-                chargesPerYear = 12 / count;
-            } else if (unit === 'year') {
-                chargesPerYear = 1 / count;
-            }
+            if (unit === 'day') chargesPerYear = 365 / count;
+            else if (unit === 'week') chargesPerYear = 52 / count;
+            else if (unit === 'month') chargesPerYear = 12 / count;
+            else if (unit === 'year') chargesPerYear = 1 / count;
 
-            const yearlyTotal = amount * chargesPerYear;
-            const monthlyCost = yearlyTotal / 12;
+            const monthlyCost = (amount * chargesPerYear) / 12;
 
             return {
+                id: sub.id,
                 name: sub.name || 'Unnamed',
                 value: monthlyCost
             };
@@ -119,81 +104,118 @@ export default function SpendDistributionChart() {
         // Sort descending by value
         normalizedData.sort((a, b) => b.value - a.value);
 
-        // Group into top N and "Others"
-        const MAX_ITEMS = 5;
-        if (normalizedData.length > MAX_ITEMS) {
-            const topItems = normalizedData.slice(0, MAX_ITEMS - 1);
-            const others = normalizedData.slice(MAX_ITEMS - 1).reduce(
-                (acc, curr) => ({
-                    name: 'Others',
-                    value: acc.value + curr.value
-                }),
-                { name: 'Others', value: 0 }
-            );
+        // Calculate quintiles to categorize impact mathematically rather than arbitrarily
+        const maxVal = normalizedData[0].value;
+        const total = normalizedData.reduce((acc, curr) => acc + curr.value, 0);
 
-            return [...topItems, others].map(item => ({
-                ...item,
-                value: Number(item.value.toFixed(2))
-            }));
-        }
+        const highImpact: typeof normalizedData = [];
+        const mediumImpact: typeof normalizedData = [];
+        const lowImpact: typeof normalizedData = [];
 
-        return normalizedData.map(item => ({
-            ...item,
-            value: Number(item.value.toFixed(2))
-        }));
+        normalizedData.forEach(item => {
+            if (item.value >= maxVal * 0.5) {
+                highImpact.push(item);
+            } else if (item.value >= maxVal * 0.15) {
+                mediumImpact.push(item);
+            } else {
+                lowImpact.push(item);
+            }
+        });
+
+        return { highImpact, mediumImpact, lowImpact, total };
     }, [subscriptions]);
 
     if (loading) {
         return (
             <div className="card p-6 animate-pulse h-full">
-                <div className="h-6 bg-white/10 rounded w-1/2 mb-4"></div>
-                <div className="bg-white/5 rounded-full w-40 h-40 mx-auto"></div>
-            </div>
-        );
-    }
-
-    if (chartData.length === 0) {
-        return (
-            <div className="flex flex-col h-full w-full">
-                <h2 className="text-xl font-semibold text-slate-100 flex-none mb-4">Spend Breakdown</h2>
-                <div className="flex-1 min-h-[150px] flex items-center justify-center border border-dashed border-white/10 rounded-lg">
-                    <p className="text-slate-400 text-sm">No active subscriptions to analyze.</p>
+                <div className="h-6 bg-zinc-800 rounded w-1/2 mb-6"></div>
+                <div className="space-y-4">
+                    <div className="h-10 bg-zinc-800 rounded-lg w-full"></div>
+                    <div className="h-10 bg-zinc-800 rounded-lg w-full"></div>
+                    <div className="h-10 bg-zinc-800 rounded-lg w-full"></div>
                 </div>
             </div>
         );
     }
+
+    if (!impactSegments) {
+        return (
+            <div className="flex flex-col h-full w-full">
+                <h2 className="text-xl font-semibold text-zinc-100 flex-none mb-4">Spend Impact Breakdown</h2>
+                <div className="flex-1 min-h-[150px] flex items-center justify-center border border-zinc-800 rounded-lg bg-zinc-900/50">
+                    <p className="text-zinc-500 text-sm">No active subscriptions to analyze.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { highImpact, mediumImpact, lowImpact, total } = impactSegments;
+    const MAX_SHOWN_LOW_IMPACT = 3;
 
     return (
         <div className="flex flex-col h-full w-full">
-            <h2 className="text-xl font-semibold text-slate-100 flex-none mb-4">Spend Breakdown <span className="text-xs font-normal text-slate-400 ml-2">(Monthly Avg)</span></h2>
+            <h2 className="text-xl font-semibold text-zinc-100 flex-none mb-6">Spend Impact Breakdown</h2>
 
-            <div className="flex-1 min-h-[150px] w-full relative">
-                <div className="absolute inset-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={chartData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={40}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                stroke="none"
-                            >
-                                {chartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#18181b', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.5)' }}
-                                itemStyle={{ color: '#e4e4e7' }}
-                                formatter={(value: number | undefined) => [`₹${(value || 0).toFixed(2)}`, 'Monthly Equivalent']}
-                            />
-                            <Legend wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
+            <div className="flex-1 w-full space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+
+                {/* High Impact */}
+                {highImpact.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">High Impact</h3>
+                        </div>
+                        <div className="space-y-2">
+                            {highImpact.map(item => (
+                                <div key={item.id} className="flex justify-between items-center bg-zinc-900 border border-zinc-800 rounded-lg p-3 group hover:border-zinc-700 transition-colors">
+                                    <span className="text-sm font-semibold text-zinc-200">{item.name}</span>
+                                    <span className="text-sm font-semibold text-red-400">₹{item.value.toFixed(2)} / mo</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Medium Impact */}
+                {mediumImpact.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Medium Impact</h3>
+                        </div>
+                        <div className="space-y-2">
+                            {mediumImpact.map(item => (
+                                <div key={item.id} className="flex justify-between items-center bg-zinc-900 border border-zinc-800 rounded-lg p-3 group hover:border-zinc-700 transition-colors">
+                                    <span className="text-sm font-medium text-zinc-300">{item.name}</span>
+                                    <span className="text-sm font-medium text-amber-400">₹{item.value.toFixed(2)} / mo</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Low Impact */}
+                {lowImpact.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Low Impact</h3>
+                        </div>
+                        <div className="space-y-2">
+                            {lowImpact.slice(0, MAX_SHOWN_LOW_IMPACT).map(item => (
+                                <div key={item.id} className="flex justify-between items-center border-b border-zinc-800/50 pb-2 last:border-0 last:pb-0">
+                                    <span className="text-sm text-zinc-400">{item.name}</span>
+                                    <span className="text-sm text-zinc-500">₹{item.value.toFixed(2)}</span>
+                                </div>
+                            ))}
+                            {lowImpact.length > MAX_SHOWN_LOW_IMPACT && (
+                                <div className="text-xs text-zinc-500 italic pt-1">
+                                    + {lowImpact.length - MAX_SHOWN_LOW_IMPACT} more minor subscriptions
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

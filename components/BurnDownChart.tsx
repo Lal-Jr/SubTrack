@@ -296,16 +296,6 @@ export default function BurnDownChart() {
             <div className="card space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h2 className="text-xl font-semibold text-slate-100">Spend Projection</h2>
-                    <div className="flex gap-6 text-sm">
-                        <div>
-                            <p className="text-slate-400 font-medium">Monthly Avg</p>
-                            <p className="text-xl font-bold text-white">₹0.00</p>
-                        </div>
-                        <div>
-                            <p className="text-slate-400 font-medium">Yearly Total</p>
-                            <p className="text-xl font-bold text-white">₹0.00</p>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="h-[250px] w-full">
@@ -357,23 +347,6 @@ export default function BurnDownChart() {
         <div className="flex flex-col h-full w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 flex-none">
                 <h2 className="text-xl font-semibold text-slate-100">Spend Projection</h2>
-                <div className="flex gap-6 text-sm">
-                    <div>
-                        <p className="text-slate-400 font-medium">Monthly Avg</p>
-                        <p className="text-xl font-bold text-white">
-                            ₹{monthlyRate.toFixed(2)}
-                            {profile?.monthly_income ? (
-                                <span className="text-sm font-normal text-slate-500 ml-2">
-                                    {((monthlyRate / profile.monthly_income) * 100).toFixed(1)}% of income
-                                </span>
-                            ) : null}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-slate-400 font-medium">Yearly Total</p>
-                        <p className="text-xl font-bold text-white">₹{yearlyRate.toFixed(2)}</p>
-                    </div>
-                </div>
             </div>
 
             <div className="flex-1 min-h-[200px] w-full relative">
