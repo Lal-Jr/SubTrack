@@ -13,11 +13,13 @@ import ForecastChartWidget from '@/components/ForecastChartWidget';
 import RenewalCalendarWidget from '@/components/RenewalCalendarWidget';
 import TimelineView from '@/components/TimelineView';
 import { db } from '@/lib/powersync';
+import { SupabaseConnector } from '@/lib/supabaseConnector';
 
 export default function DashboardPage() {
   const { widgets, toggleWidget, isLoaded } = useWidgets();
   const [managerOpen, setManagerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Map widget ID to its component
   const widgetComponentMap: Record<string, React.ReactNode> = {
@@ -29,8 +31,21 @@ export default function DashboardPage() {
   };
 
   const handleSyncData = async () => {
-    // Visual feedback for sync - PowerSync handles actual sync automatically
-    alert("Data sync queued. PowerSync synchronizes automatically in the background.");
+    setIsSyncing(true);
+    try {
+      // Disconnect and reconnect to forcefully trigger a sync cycle
+      await db.disconnect();
+      const connector = new SupabaseConnector();
+      await db.connect(connector);
+
+      // Give the visual a moment to show it "worked"
+      setTimeout(() => {
+        setIsSyncing(false);
+      }, 1500);
+    } catch (e) {
+      console.error('Manual sync failed:', e);
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -67,10 +82,26 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={handleSyncData}
-            className="btn bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-sm px-4 py-2 flex items-center gap-2"
+            disabled={isSyncing}
+            className="btn bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            Sync Data
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={isSyncing ? "animate-spin" : ""}
+            >
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            {isSyncing ? "Syncing..." : "Sync Data"}
           </button>
         </div>
       </div>

@@ -11,8 +11,9 @@ export default function DBInit() {
             try {
                 console.log("Calling db.init()...");
                 await db.init();
+
                 if (mounted) {
-                    console.log("PowerSync DB initialized successfully");
+                    console.log("PowerSync DB initialized in OFFLINE mode. Waiting for manual sync trigger.");
                 }
             } catch (err) {
                 console.error("DB init failed:", err);
