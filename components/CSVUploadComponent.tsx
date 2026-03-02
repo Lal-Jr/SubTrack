@@ -20,9 +20,14 @@ interface FoundSubscription {
     intervalType: string;
     nextChargeDate: string;
     selected: boolean;
+    category?: string;
 }
 
-export default function CSVUploadComponent() {
+interface CSVUploadComponentProps {
+    onSuccess?: () => void;
+}
+
+export default function CSVUploadComponent({ onSuccess }: CSVUploadComponentProps = {}) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [foundSubscriptions, setFoundSubscriptions] = useState<FoundSubscription[]>([]);
@@ -137,6 +142,12 @@ export default function CSVUploadComponent() {
         );
     };
 
+    const handleCategoryChange = (id: string, category: string) => {
+        setFoundSubscriptions(prev =>
+            prev.map(sub => sub.id === id ? { ...sub, category } : sub)
+        );
+    };
+
     const handleImport = async () => {
         setLoading(true);
         const selected = foundSubscriptions.filter(s => s.selected);
@@ -147,8 +158,8 @@ export default function CSVUploadComponent() {
                 const id = crypto.randomUUID();
                 await db.execute(
                     `INSERT INTO subscriptions 
-              (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at, category, is_variable) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
                     [
                         id,
                         sub.name,
@@ -161,7 +172,8 @@ export default function CSVUploadComponent() {
                         0.8,
                         1,
                         now,
-                        now
+                        now,
+                        sub.category || null
                     ]
                 );
             }
@@ -264,11 +276,24 @@ export default function CSVUploadComponent() {
                                         readOnly
                                         className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
                                     />
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0 pr-4">
                                         <p className="font-medium truncate" title={sub.name}>{sub.name}</p>
                                         <p className="text-xs text-slate-400">Next bill: {sub.nextChargeDate}</p>
+                                        <select
+                                            value={sub.category || ''}
+                                            onChange={(e) => handleCategoryChange(sub.id, e.target.value)}
+                                            className="mt-2 text-xs bg-slate-800 border-slate-700 text-slate-300 rounded p-1 max-w-[140px]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <option value="">No Category</option>
+                                            <option value="Entertainment">Entertainment</option>
+                                            <option value="Software">Software</option>
+                                            <option value="Utilities">Utilities</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Other">Other</option>
+                                        </select>
                                     </div>
-                                    <div className="font-semibold text-right">
+                                    <div className="font-semibold text-right flex-none">
                                         <span className="text-xs text-slate-400 mr-1">{sub.currency}</span>
                                         {sub.amount.toFixed(2)}
                                     </div>

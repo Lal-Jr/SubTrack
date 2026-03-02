@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/powersync';
 
-export default function AddSubscriptionForm() {
+interface AddSubscriptionFormProps {
+    onSuccess?: () => void;
+}
+
+export default function AddSubscriptionForm({ onSuccess }: AddSubscriptionFormProps = {}) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
@@ -16,11 +20,19 @@ export default function AddSubscriptionForm() {
         intervalCount: '1',     // used if custom
         intervalUnit: 'month',  // 'day', 'week', 'month', 'year'
         billingStartDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        category: 'Entertainment',
+        tags: '',
+        isVariable: false,
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData((prev) => ({ ...prev, [name]: checked }));
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -102,8 +114,8 @@ export default function AddSubscriptionForm() {
 
             await db.execute(
                 `INSERT INTO subscriptions 
-          (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at, category, tags, is_variable) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     id,
                     formData.name,
@@ -116,11 +128,18 @@ export default function AddSubscriptionForm() {
                     1.0, // confidence
                     1,   // active
                     now,
-                    now
+                    now,
+                    formData.category,
+                    formData.tags,
+                    formData.isVariable ? 1 : 0
                 ]
             );
 
-            router.push('/');
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                router.push('/');
+            }
             router.refresh(); // Refresh the dashboard if it fetches data
         } catch (error) {
             console.error('Failed to add subscription', error);
@@ -176,6 +195,9 @@ export default function AddSubscriptionForm() {
                         className="input w-full"
                     >
                         <option value="INR">INR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
                     </select>
                 </div>
             </div>
@@ -208,6 +230,53 @@ export default function AddSubscriptionForm() {
                         className="input"
                     />
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="category" className="label block mb-1">Category</label>
+                    <select
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="input w-full"
+                    >
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Software">Software</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Food & Drink">Food & Drink</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="tags" className="label block mb-1">Tags (Comma separated)</label>
+                    <input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        value={formData.tags}
+                        onChange={handleChange}
+                        className="input"
+                        placeholder="e.g. work, family"
+                    />
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2">
+                <input
+                    type="checkbox"
+                    id="isVariable"
+                    name="isVariable"
+                    checked={formData.isVariable}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-indigo-600 bg-zinc-800 border-zinc-700 rounded focus:ring-indigo-500 focus:ring-2"
+                />
+                <label htmlFor="isVariable" className="text-sm font-medium text-zinc-300 cursor-pointer">
+                    This is a variable billing subscription (amount may change)
+                </label>
             </div>
 
             {formData.intervalType === 'custom' && (

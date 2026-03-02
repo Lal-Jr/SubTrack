@@ -15,6 +15,9 @@ const AppSchema = new Schema({
         active: column.integer,
         created_at: column.integer,
         updated_at: column.integer,
+        category: column.text,
+        tags: column.text,
+        is_variable: column.integer,
     }),
     profiles: new Table({
         id: column.text,

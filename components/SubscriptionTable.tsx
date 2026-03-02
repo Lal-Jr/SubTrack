@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/powersync';
+import AddSubscriptionModal from '@/components/AddSubscriptionModal';
 
 type Subscription = {
     id: string;
@@ -12,6 +13,9 @@ type Subscription = {
     interval_unit: string;
     next_charge_date: string;
     active?: number;
+    category?: string;
+    tags?: string;
+    is_variable?: number;
 };
 
 type FilterType = 'all' | 'active' | 'inactive' | 'overdue' | 'due_soon';
@@ -20,6 +24,7 @@ export default function SubscriptionTable() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<FilterType>('all');
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -107,6 +112,44 @@ export default function SubscriptionTable() {
         }
     };
 
+    const handleMarkPaid = async (sub: Subscription) => {
+        if (!sub.next_charge_date) return;
+
+        let date = new Date(sub.next_charge_date);
+        const count = sub.interval_count || 1;
+        const unit = sub.interval_unit || 'month';
+
+        if (unit === 'day') {
+            date.setDate(date.getDate() + count);
+        } else if (unit === 'week') {
+            date.setDate(date.getDate() + (count * 7));
+        } else if (unit === 'month') {
+            date.setMonth(date.getMonth() + count);
+        } else if (unit === 'year') {
+            date.setFullYear(date.getFullYear() + count);
+        }
+
+        const newChargeDate = date.toISOString();
+
+        // Optimistically update
+        setSubscriptions(prev =>
+            prev.map(s => s.id === sub.id ? { ...s, next_charge_date: newChargeDate } : s)
+        );
+
+        try {
+            await db.execute(
+                'UPDATE subscriptions SET next_charge_date = ?, updated_at = ? WHERE id = ?',
+                [newChargeDate, Date.now(), sub.id]
+            );
+        } catch (error) {
+            console.error('Failed to mark as paid', error);
+            // Revert
+            setSubscriptions(prev =>
+                prev.map(s => s.id === sub.id ? { ...s, next_charge_date: sub.next_charge_date } : s)
+            );
+        }
+    };
+
     const formatInterval = (count: number, unit: string) => {
         if (!count || !unit) return 'Unknown';
 
@@ -128,7 +171,6 @@ export default function SubscriptionTable() {
         if (!dateString) return 'N/A';
         const targetDate = new Date(dateString);
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
 
         const diffTime = targetDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -155,11 +197,13 @@ export default function SubscriptionTable() {
             if (filter === 'active') return isActive;
             if (filter === 'inactive') return !isActive;
 
+            // For all other filters (overdue, due_soon), explicitly hide inactive items
+            if (!isActive && filter !== 'all') return false;
+
             if (filter === 'overdue' || filter === 'due_soon') {
                 if (!sub.next_charge_date) return false;
                 const targetDate = new Date(sub.next_charge_date);
                 const today = new Date();
-                today.setHours(0, 0, 0, 0);
                 const diffTime = targetDate.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -189,11 +233,20 @@ export default function SubscriptionTable() {
 
     return (
         <div className="flex flex-col h-full w-full max-h-full">
-            <div className="flex justify-end mb-3 flex-none sticky top-0 z-10 bg-black/20 backdrop-blur-md rounded-lg p-2 border border-white/5">
+            <div className="flex-none p-5 border-b border-zinc-800 bg-zinc-900/40 flex items-center justify-between sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        Your Subscriptions
+                    </h2>
+                    <button onClick={() => setIsAddModalOpen(true)} className="text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-indigo-500/20 hover:text-indigo-300 p-1 rounded border border-transparent hover:border-indigo-500/30" title="Add Subscription">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                </div>
                 <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as FilterType)}
-                    className="input py-1.5 px-3 text-sm max-w-[160px] bg-white/5 border-white/10"
+                    className="input py-1.5 px-3 text-sm max-w-[160px] bg-white/5 border-white/10 m-0"
                 >
                     <option value="all">All Subscriptions</option>
                     <option value="active">Active</option>
@@ -203,7 +256,7 @@ export default function SubscriptionTable() {
                 </select>
             </div>
 
-            <div className="flex flex-col gap-3 flex-1 overflow-y-auto pb-4 custom-scrollbar">
+            <div className="flex flex-col gap-3 flex-1 overflow-y-auto p-5 custom-scrollbar">
                 {filteredAndSortedSubscriptions.length > 0 ? (
                     filteredAndSortedSubscriptions.map((sub) => {
                         const isActive = sub.active !== 0;
@@ -228,6 +281,23 @@ export default function SubscriptionTable() {
                                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: sub.currency }).format(sub.amount)}{' '}
                                             <span className="text-slate-500 font-normal ml-1">• {formatInterval(sub.interval_count, sub.interval_unit)}</span>
                                         </p>
+                                        <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                            {sub.category && (
+                                                <span className="px-2 py-0.5 text-[10px] font-medium tracking-wide bg-indigo-500/10 text-indigo-300 rounded-md border border-indigo-500/20">
+                                                    {sub.category}
+                                                </span>
+                                            )}
+                                            {sub.is_variable === 1 && (
+                                                <span className="px-2 py-0.5 text-[10px] font-medium tracking-wide bg-orange-500/10 text-orange-300 rounded-md border border-orange-500/20">
+                                                    Variable
+                                                </span>
+                                            )}
+                                            {sub.tags && sub.tags.split(',').map((tag, i) => tag.trim() && (
+                                                <span key={i} className="px-2 py-0.5 text-[10px] font-medium tracking-wide bg-white/5 text-slate-300 rounded-md border border-white/10">
+                                                    #{tag.trim()}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -247,16 +317,26 @@ export default function SubscriptionTable() {
                                             </p>
                                         )}
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={() => toggleSubscriptionStatus(sub.id, sub.active)}
+                                            className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors duration-200 border w-[72px] ${isActive
+                                                ? 'border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                                                : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300'
+                                                }`}
+                                        >
+                                            {isActive ? 'Cancel' : 'Restore'}
+                                        </button>
 
-                                    <button
-                                        onClick={() => toggleSubscriptionStatus(sub.id, sub.active)}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 border w-[80px] ${isActive
-                                            ? 'border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
-                                            : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 hover:text-indigo-300'
-                                            }`}
-                                    >
-                                        {isActive ? 'Cancel' : 'Restore'}
-                                    </button>
+                                        {isActive && sub.next_charge_date && getRelativeTime(sub.next_charge_date) === 'Overdue' && (
+                                            <button
+                                                onClick={() => handleMarkPaid(sub)}
+                                                className="px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors duration-200 border w-[72px] border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                                            >
+                                                Mark Paid
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -267,6 +347,8 @@ export default function SubscriptionTable() {
                     </div>
                 )}
             </div>
+
+            <AddSubscriptionModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
         </div>
     );
 }

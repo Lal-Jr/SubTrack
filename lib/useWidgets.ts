@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type WidgetType = 'stats' | 'renewals' | 'projection' | 'breakdown';
+export type WidgetType = 'stats' | 'breakdown' | 'category-pie' | 'forecast' | 'calendar';
 
 export type WidgetPref = {
     id: WidgetType;
@@ -9,9 +9,10 @@ export type WidgetPref = {
 
 const DEFAULT_WIDGETS: WidgetPref[] = [
     { id: 'stats', visible: true },
-    { id: 'projection', visible: true },
     { id: 'breakdown', visible: true },
-    { id: 'renewals', visible: true },
+    { id: 'category-pie', visible: true },
+    { id: 'forecast', visible: true },
+    { id: 'calendar', visible: true },
 ];
 
 export function useWidgets() {
@@ -19,7 +20,7 @@ export function useWidgets() {
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem('subtrack_widget_prefs');
+        const stored = localStorage.getItem('subtrack_widget_prefs_v3');
         if (stored) {
             try {
                 const parsed = JSON.parse(stored) as WidgetPref[];
@@ -56,14 +57,14 @@ export function useWidgets() {
     const toggleWidget = (id: WidgetType) => {
         setWidgets(prev => {
             const next = prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
-            localStorage.setItem('subtrack_widget_prefs', JSON.stringify(next));
+            localStorage.setItem('subtrack_widget_prefs_v3', JSON.stringify(next));
             return next;
         });
     };
 
     const reorderWidgets = (newOrder: WidgetPref[]) => {
         setWidgets(newOrder);
-        localStorage.setItem('subtrack_widget_prefs', JSON.stringify(newOrder));
+        localStorage.setItem('subtrack_widget_prefs_v3', JSON.stringify(newOrder));
     };
 
     return { widgets, toggleWidget, reorderWidgets, isLoaded };

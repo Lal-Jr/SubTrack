@@ -10,14 +10,14 @@ export default function SerwistPWAInit() {
             // We will manually register it to guarantee it works.
             navigator.serviceWorker.register("/sw.js").then((reg) => {
                 console.log("Serwist Service Worker Registered", reg);
-            }).catch((err) => {
-                console.error("Serwist Service Worker Registration Failed", err);
+            }).catch(() => {
+                // Silently ignore in dev if sw doesn't exist
             });
         } else if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js").then((reg) => {
-                console.log("Service Worker Registered Manually", reg);
-            }).catch((err) => {
-                console.error("Service Worker Registration Failed Manually", err);
+                // Service worker loaded (could be dev dummy or actual production sw)
+            }).catch(() => {
+                // Ignore register errors if the browser doesn't support or file is completely missing
             });
         }
     }, []);

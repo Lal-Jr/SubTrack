@@ -17,16 +17,18 @@ export default function WidgetManagerModal({
 
     const widgetNames: Record<WidgetType, string> = {
         'stats': 'Quick Stats',
-        'projection': 'Spend Projection',
         'breakdown': 'Spend Breakdown',
-        'renewals': 'Upcoming Renewals'
+        'category-pie': 'Category Breakdown',
+        'forecast': '3-Month Forecast',
+        'calendar': 'Renewal Calendar'
     };
 
     const widgetDescriptions: Record<WidgetType, string> = {
         'stats': 'High-level overview of totals and averages.',
-        'projection': 'Line chart showing historical and forecasted spending.',
         'breakdown': 'Pie chart breaking down your monthly costs.',
-        'renewals': 'List of subscriptions charging in the next 30 days.'
+        'category-pie': 'Pie chart grouping subscriptions by category.',
+        'forecast': 'Area chart projecting spending for the next 3 months.',
+        'calendar': 'Monthly calendar grid showing upcoming charges.'
     };
 
     return (
