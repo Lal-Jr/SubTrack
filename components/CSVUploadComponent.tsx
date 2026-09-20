@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { db } from '@/lib/powersync';
 import { useRouter } from 'next/navigation';
-import { detectRecurringSubscriptions, Transaction as DetectionTransaction } from '@/lib/subscriptionDetection';
+import { detectSubscriptions, toInterval, type Transaction as DetectionTransaction } from '@/lib/detection';
+import { toMajor, toMinor } from '@/types/money';
 import { parseStatement } from '@/lib/statementParser';
 
 interface ParsedTransaction {
@@ -17,8 +18,13 @@ interface FoundSubscription {
     name: string;
     amount: number;
     currency: string;
-    intervalType: string;
-    nextChargeDate: string;
+    intervalCount: number;
+    intervalUnit: string;
+    lastChargeDate: string;
+    nextChargeDate: string | null;
+    confidence: number;
+    isVariable: boolean;
+    active: boolean;
     selected: boolean;
     category?: string;
 }
@@ -88,22 +94,32 @@ export default function CSVUploadComponent({ onSuccess }: CSVUploadComponentProp
             const detectionInput: DetectionTransaction[] = rawTransactions.map(t => ({
                 date: t.date, // already an ISO string
                 description: t.description,
-                amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount)
+                amountMinor: toMinor(t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount))
             }));
 
             // 3. Run the recurring subscription detection module
-            const detectedSubs = detectRecurringSubscriptions(detectionInput);
+            const detectedSubs = detectSubscriptions(detectionInput);
 
             // 4. Map the module format to our UI state format
-            const distinctSubscriptions: FoundSubscription[] = detectedSubs.map(ds => ({
-                id: crypto.randomUUID(),
-                name: ds.merchant,
-                amount: ds.averageAmount,
-                currency: 'INR', // Defaulting for now
-                intervalType: ds.frequency.toLowerCase(),
-                nextChargeDate: ds.nextExpectedPayment.split('T')[0],
-                selected: true,
-            }));
+            const distinctSubscriptions: FoundSubscription[] = detectedSubs.map(ds => {
+                const interval = toInterval(ds.frequency);
+                return {
+                    id: crypto.randomUUID(),
+                    name: ds.merchant,
+                    amount: toMajor(ds.amountMinor),
+                    currency: 'INR', // Defaulting for now
+                    intervalCount: interval.count,
+                    intervalUnit: interval.unit,
+                    lastChargeDate: ds.lastDate,
+                    nextChargeDate: ds.nextDate,
+                    confidence: ds.confidence,
+                    isVariable: ds.isVariable,
+                    active: ds.active,
+                    // Lapsed subscriptions are offered but not pre-selected.
+                    selected: ds.active,
+                    category: ds.category ?? undefined,
+                };
+            });
 
             // 5. Fetch existing subscriptions to deduplicate
             let existingSubscriptions: { name: string, amount: number }[] = [];
@@ -158,22 +174,24 @@ export default function CSVUploadComponent({ onSuccess }: CSVUploadComponentProp
                 const id = crypto.randomUUID();
                 await db.execute(
                     `INSERT INTO subscriptions 
-              (id, name, amount, currency, interval_count, interval_unit, next_charge_date, source, confidence, active, created_at, updated_at, category, is_variable) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+              (id, name, amount, currency, interval_count, interval_unit, last_charge_date, next_charge_date, source, confidence, active, created_at, updated_at, category, is_variable) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         id,
                         sub.name,
                         sub.amount,
                         sub.currency,
-                        1,
-                        'month',
+                        sub.intervalCount,
+                        sub.intervalUnit,
+                        sub.lastChargeDate,
                         sub.nextChargeDate,
                         'csv_import',
-                        0.8,
-                        1,
+                        sub.confidence,
+                        sub.active ? 1 : 0,
                         now,
                         now,
-                        sub.category || null
+                        sub.category || null,
+                        sub.isVariable ? 1 : 0
                     ]
                 );
             }
@@ -278,7 +296,7 @@ export default function CSVUploadComponent({ onSuccess }: CSVUploadComponentProp
                                     />
                                     <div className="flex-1 min-w-0 pr-4">
                                         <p className="font-medium truncate" title={sub.name}>{sub.name}</p>
-                                        <p className="text-xs text-slate-400">Next bill: {sub.nextChargeDate}</p>
+                                        <p className="text-xs text-slate-400">{sub.active ? `Next bill: ${sub.nextChargeDate}` : `Looks cancelled (last charged ${sub.lastChargeDate})`}</p>
                                         <select
                                             value={sub.category || ''}
                                             onChange={(e) => handleCategoryChange(sub.id, e.target.value)}
