@@ -12,14 +12,11 @@ import CategoryPieChartWidget from '@/components/CategoryPieChartWidget';
 import ForecastChartWidget from '@/components/ForecastChartWidget';
 import RenewalCalendarWidget from '@/components/RenewalCalendarWidget';
 import TimelineView from '@/components/TimelineView';
-import { db } from '@/lib/powersync';
-import { SupabaseConnector } from '@/lib/supabaseConnector';
 
 export default function DashboardPage() {
   const { widgets, toggleWidget, isLoaded } = useWidgets();
   const [managerOpen, setManagerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Map widget ID to its component
   const widgetComponentMap: Record<string, React.ReactNode> = {
@@ -28,24 +25,6 @@ export default function DashboardPage() {
     'category-pie': <CategoryPieChartWidget />,
     'forecast': <ForecastChartWidget />,
     'calendar': <RenewalCalendarWidget />
-  };
-
-  const handleSyncData = async () => {
-    setIsSyncing(true);
-    try {
-      // Disconnect and reconnect to forcefully trigger a sync cycle
-      await db.disconnect();
-      const connector = new SupabaseConnector();
-      await db.connect(connector);
-
-      // Give the visual a moment to show it "worked"
-      setTimeout(() => {
-        setIsSyncing(false);
-      }, 1500);
-    } catch (e) {
-      console.error('Manual sync failed:', e);
-      setIsSyncing(false);
-    }
   };
 
   return (
@@ -79,29 +58,6 @@ export default function DashboardPage() {
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             Customize Widgets
-          </button>
-          <button
-            onClick={handleSyncData}
-            disabled={isSyncing}
-            className="btn bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={isSyncing ? "animate-spin" : ""}
-            >
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            {isSyncing ? "Syncing..." : "Sync Data"}
           </button>
         </div>
       </div>

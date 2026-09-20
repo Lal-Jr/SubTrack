@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { db } from "@/lib/powersync";
+import { db } from "@/lib/db";
+import { runMigrations } from "@/lib/db/migrations";
+import { settingsStore } from "@/lib/db/settings";
 
 export default function DBInit() {
     useEffect(() => {
@@ -11,9 +13,10 @@ export default function DBInit() {
             try {
                 console.log("Calling db.init()...");
                 await db.init();
+                await runMigrations(settingsStore);
 
                 if (mounted) {
-                    console.log("PowerSync DB initialized in OFFLINE mode. Waiting for manual sync trigger.");
+                    console.log("Local database ready (local-only).");
                 }
             } catch (err) {
                 console.error("DB init failed:", err);
