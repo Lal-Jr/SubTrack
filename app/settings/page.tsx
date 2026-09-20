@@ -121,7 +121,7 @@ function DataCard() {
 
 export default function SettingsPage() {
     return (
-        <div className="max-w-2xl">
+        <div>
             <PageHeader title="Settings" />
             <div className="space-y-6">
                 <ProfileCard />

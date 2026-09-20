@@ -1,7 +1,21 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 
+/** A quiet panel. Used sparingly: most structure comes from Section and hairlines. */
 export function Card({ className = '', ...rest }: HTMLAttributes<HTMLDivElement>) {
-    return <div className={`bg-surface border border-line rounded-card ${className}`} {...rest} />;
+    return <div className={`bg-surface border border-line rounded-2xl ${className}`} {...rest} />;
+}
+
+/** A titled block separated by a hairline rule instead of a box. */
+export function Section({ title, hint, action, children, className = '' }: { title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string }) {
+    return (
+        <section className={`border-t border-line pt-4 ${className}`}>
+            <div className="flex items-baseline justify-between gap-4 mb-4">
+                <h2 className="eyebrow">{title}</h2>
+                {action ?? (hint && <p className="text-xs text-ink-3">{hint}</p>)}
+            </div>
+            {children}
+        </section>
+    );
 }
 
 export function CardHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
@@ -22,12 +36,9 @@ export function Skeleton({ className = '' }: { className?: string }) {
 
 export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
     return (
-        <div className="flex flex-col items-center text-center gap-3 py-12 px-6">
-            <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center" aria-hidden>
-                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-            </div>
-            <p className="text-ink font-medium">{title}</p>
-            <p className="text-sm text-ink-3 max-w-sm">{body}</p>
+        <div className="flex flex-col items-start gap-3 py-10">
+            <p className="font-display text-4xl leading-none text-ink">{title}</p>
+            <p className="text-sm text-ink-2 max-w-sm">{body}</p>
             {action}
         </div>
     );

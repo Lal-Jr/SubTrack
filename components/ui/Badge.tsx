@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 const TONES = {
-    neutral: 'bg-raised text-ink-2 border-line-strong',
+    neutral: 'text-ink-2 border-line-strong',
     good: 'bg-accent-soft text-accent border-accent/30',
     warn: 'bg-warn/10 text-warn border-warn/30',
     danger: 'bg-danger/10 text-danger border-danger/30',

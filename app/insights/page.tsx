@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import BarList from '@/components/charts/BarList';
 import ForecastChart from '@/components/charts/ForecastChart';
 import RenewalCalendar from '@/components/charts/RenewalCalendar';
-import IncomeBar from '@/components/subscriptions/IncomeBar';
+import CommittedGauge from '@/components/runway/CommittedGauge';
 import { LinkButton } from '@/components/ui/Button';
-import { Card, CardHeader, EmptyState, Skeleton } from '@/components/ui/Card';
+import { EmptyState, Section, Skeleton } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { categoryColor } from '@/lib/chartColors';
 import { formatMajor } from '@/lib/format';
@@ -21,12 +21,14 @@ export default function InsightsPage() {
     const { profile, currency, loading: pl } = useProfile();
 
     const view = useMemo(() => {
-        const active = subs.data.filter((s) => isActive(s) && (s.currency ?? currency) === currency);
-        const cancelled = subs.data.filter((s) => !isActive(s) && (s.currency ?? currency) === currency);
+        const inCur = (s: { currency: string | null }) => (s.currency ?? currency) === currency;
+        const active = subs.data.filter((s) => isActive(s) && inCur(s));
+        const cancelled = subs.data.filter((s) => !isActive(s) && inCur(s));
+        const ranked = [...active].sort((a, b) => yearlyMinor(b) - yearlyMinor(a));
         return {
             t: totals(subs.data, currency),
             categories: categoryBreakdown(subs.data, currency),
-            top: [...active].sort((a, b) => yearlyMinor(b) - yearlyMinor(a)).slice(0, 8),
+            ranked,
             months: forecast(subs.data, todayUtc(), 12, currency),
             savedYearly: cancelled.reduce((a, s) => a + yearlyMinor(s), 0),
             cancelledCount: cancelled.length,
@@ -34,78 +36,75 @@ export default function InsightsPage() {
     }, [subs.data, currency]);
 
     if (subs.loading || pl) {
-        return <div><PageHeader title="Insights" /><div className="grid lg:grid-cols-2 gap-6">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-72" />)}</div></div>;
+        return <div><PageHeader title="Insights" /><div className="space-y-6">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-48" />)}</div></div>;
     }
     if (view.t.activeCount === 0) {
         return (
             <div>
                 <PageHeader title="Insights" />
-                <Card><EmptyState title="Nothing to analyze yet" body="Insights appear once you have active subscriptions." action={<LinkButton href="/import" variant="primary">Import a statement</LinkButton>} /></Card>
+                <EmptyState title="Nothing to read yet." body="Insights appear once you have active subscriptions." action={<LinkButton href="/import" variant="primary">Import a statement</LinkButton>} />
             </div>
         );
     }
 
+    const yearly = view.ranked.reduce((a, s) => a + yearlyMinor(s), 0) || 1;
+    const top = view.ranked[0];
+
     return (
-        <div>
-            <PageHeader title="Insights" description="Where your subscription money goes" />
-            <div className="grid lg:grid-cols-2 gap-6">
-                <Card className="pb-5">
-                    <CardHeader title="By category" description="Monthly cost, share of total" />
-                    <div className="px-5 pt-4 space-y-5">
-                        <div className="flex h-3 gap-0.5 rounded-full overflow-hidden" role="img" aria-label="Share of monthly cost by category">
-                            {view.categories.map((c) => <div key={c.category} style={{ width: `${c.share * 100}%`, background: categoryColor(c.category) }} title={`${c.category}: ${(c.share * 100).toFixed(0)}%`} />)}
-                        </div>
-                        <BarList
-                            currency={currency}
-                            unit="/mo"
-                            items={view.categories.map((c) => ({ key: c.category, label: c.category, valueMinor: c.monthlyMinor, color: categoryColor(c.category), detail: `${(c.share * 100).toFixed(0)}% · ${c.count}` }))}
-                        />
-                    </div>
-                </Card>
+        <div className="space-y-10">
+            <PageHeader
+                title="Where it goes"
+                description={top ? `${top.name} is your biggest, at ${Math.round((yearlyMinor(top) / yearly) * 100)}% of the year.` : undefined}
+            />
 
-                <Card className="pb-5">
-                    <CardHeader title="Biggest subscriptions" description="Yearly cost" />
-                    <div className="px-5 pt-4">
-                        <BarList
-                            currency={currency}
-                            unit="/yr"
-                            items={view.top.map((s) => ({ key: s.id, label: s.name, valueMinor: yearlyMinor(s), color: categoryColor(s.category || 'Other') }))}
-                        />
-                    </div>
-                </Card>
-
-                <Card className="pb-5 lg:col-span-2">
-                    <CardHeader title="Scheduled charges" description="Next 12 months, from your real charge dates" />
-                    <div className="px-5 pt-4"><ForecastChart data={view.months} currency={currency} /></div>
-                </Card>
-
-                <Card className="p-5">
-                    <h2 className="text-sm font-semibold mb-4">Renewal calendar</h2>
-                    <RenewalCalendar subs={subs.data} currency={currency} />
-                </Card>
-
-                <div className="space-y-6">
-                    {profile?.monthly_income ? (
-                        <Card className="p-5">
-                            <h2 className="text-sm font-semibold mb-3">Share of income</h2>
-                            <IncomeBar monthlyMinor={view.t.monthlyMinor} income={profile.monthly_income} currency={currency} />
-                        </Card>
-                    ) : (
-                        <Card className="p-5">
-                            <h2 className="text-sm font-semibold mb-1">Share of income</h2>
-                            <p className="text-sm text-ink-3 mb-3">Add your monthly income to see what share goes to subscriptions.</p>
-                            <LinkButton href="/settings" size="sm">Add income</LinkButton>
-                        </Card>
-                    )}
-                    {view.cancelledCount > 0 && (
-                        <Card className="p-5">
-                            <h2 className="text-sm font-semibold mb-1">Saved by cancelling</h2>
-                            <p className="text-2xl font-semibold tabular text-accent">{formatMajor(toMajor(view.savedYearly), currency, { whole: true })}<span className="text-sm text-ink-3 font-normal"> /yr</span></p>
-                            <p className="text-xs text-ink-3 mt-1">From {view.cancelledCount} cancelled subscription{view.cancelledCount === 1 ? '' : 's'}.</p>
-                        </Card>
-                    )}
+            <Section title="Weight" hint="Each block is one subscription, sized by yearly cost">
+                <div className="flex h-14 gap-[3px] rounded-lg overflow-hidden" role="img" aria-label="Yearly cost split by subscription">
+                    {view.ranked.map((s) => (
+                        <div key={s.id} title={`${s.name}: ${formatMajor(toMajor(yearlyMinor(s)), currency, { whole: true })}/yr`} style={{ flexGrow: yearlyMinor(s), flexBasis: 0, minWidth: 6, background: categoryColor(s.category || 'Other') }} />
+                    ))}
                 </div>
-            </div>
+                <div className="mt-6">
+                    <BarList
+                        currency={currency}
+                        unit="/yr"
+                        items={view.ranked.slice(0, 8).map((s) => ({ key: s.id, label: s.name, valueMinor: yearlyMinor(s), color: categoryColor(s.category || 'Other') }))}
+                    />
+                </div>
+            </Section>
+
+            <Section title="By category" hint="Monthly cost">
+                <BarList
+                    currency={currency}
+                    unit="/mo"
+                    items={view.categories.map((c) => ({ key: c.category, label: c.category, valueMinor: c.monthlyMinor, color: categoryColor(c.category), detail: `${(c.share * 100).toFixed(0)}% · ${c.count}` }))}
+                />
+            </Section>
+
+            <Section title="Next 12 months" hint="From your real charge dates">
+                <ForecastChart data={view.months} currency={currency} />
+            </Section>
+
+            <Section title="Calendar">
+                <RenewalCalendar subs={subs.data} currency={currency} />
+            </Section>
+
+            <Section title="Committed">
+                {profile?.monthly_income ? (
+                    <CommittedGauge monthly={toMajor(view.t.monthlyMinor)} income={profile.monthly_income} currency={currency} />
+                ) : (
+                    <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm text-ink-3">Add your monthly income to see how much of it is already spoken for.</p>
+                        <LinkButton href="/settings" size="sm">Add income</LinkButton>
+                    </div>
+                )}
+            </Section>
+
+            {view.cancelledCount > 0 && (
+                <Section title="Saved by cancelling">
+                    <p className="font-display text-5xl text-accent tabular">{formatMajor(toMajor(view.savedYearly), currency, { whole: true })}<span className="text-lg text-ink-3 font-sans"> /yr</span></p>
+                    <p className="text-sm text-ink-3 mt-1">From {view.cancelledCount} cancelled subscription{view.cancelledCount === 1 ? '' : 's'}.</p>
+                </Section>
+            )}
         </div>
     );
 }

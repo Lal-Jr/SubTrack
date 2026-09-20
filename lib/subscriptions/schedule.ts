@@ -67,3 +67,27 @@ export function upcomingRenewals(subs: SubscriptionRow[], todayMs: number, days:
     }
     return out.sort((a, b) => a.dateMs - b.dateMs || a.sub.name.localeCompare(b.sub.name));
 }
+
+export interface WindowCharge {
+    sub: SubscriptionRow;
+    date: string;
+    dateMs: number;
+    daysUntil: number;
+    amount: number;
+}
+
+/**
+ * Every individual charge (a weekly subscription counts each week) landing from today through
+ * `days` days ahead, soonest first. Amounts are major units in the subscription's own currency.
+ */
+export function chargesInWindow(subs: SubscriptionRow[], todayMs: number, days: number): WindowCharge[] {
+    const end = addDays(todayMs, days);
+    const out: WindowCharge[] = [];
+    for (const sub of subs) {
+        if (sub.active === 0) continue;
+        for (const dateMs of chargesBetween(sub, todayMs, end)) {
+            out.push({ sub, date: formatDay(dateMs), dateMs, daysUntil: dayDiff(todayMs, dateMs), amount: sub.amount ?? 0 });
+        }
+    }
+    return out.sort((a, b) => a.dateMs - b.dateMs || a.sub.name.localeCompare(b.sub.name));
+}

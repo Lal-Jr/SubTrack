@@ -6,14 +6,14 @@ type Size = 'sm' | 'md';
 
 const VARIANTS: Record<Variant, string> = {
     primary: 'bg-accent text-accent-ink hover:bg-accent-strong font-semibold',
-    secondary: 'bg-raised text-ink border border-line-strong hover:border-ink-3',
+    secondary: 'text-ink border border-line-strong hover:border-ink-2 hover:bg-raised',
     ghost: 'text-ink-2 hover:text-ink hover:bg-raised',
-    danger: 'bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20',
+    danger: 'text-danger border border-danger/40 hover:bg-danger/10',
 };
-const SIZES: Record<Size, string> = { sm: 'h-8 px-3 text-sm', md: 'h-10 px-4 text-sm' };
+const SIZES: Record<Size, string> = { sm: 'h-8 px-3.5 text-[13px]', md: 'h-11 px-5 text-sm' };
 
 export const buttonClass = (variant: Variant = 'secondary', size: Size = 'md') =>
-    `inline-flex items-center justify-center gap-2 rounded-xl transition-colors disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap ${VARIANTS[variant]} ${SIZES[size]}`;
+    `inline-flex items-center justify-center gap-2 rounded-full transition-colors disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap ${VARIANTS[variant]} ${SIZES[size]}`;
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: Variant;

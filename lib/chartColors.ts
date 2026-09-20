@@ -9,10 +9,10 @@ const CATEGORY_ORDER = ['Entertainment', 'Software', 'Utilities', 'Finance', 'Sh
 
 export function categoryColor(category: string): string {
     const i = CATEGORY_ORDER.indexOf(category);
-    return i === -1 ? '#7f8898' : SERIES[i];
+    return i === -1 ? '#8a8373' : SERIES[i];
 }
 
 export const CATEGORIES = CATEGORY_ORDER;
 
-/** Single-series charts use one calm hue: the first slot. */
-export const PRIMARY_SERIES = SERIES[0];
+/** Single-series charts (money leaving the account) use the signal color. */
+export const PRIMARY_SERIES = '#dcff4d';

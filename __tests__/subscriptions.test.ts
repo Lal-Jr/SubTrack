@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { chargesBetween, nextChargeOnOrAfter, nthCharge, upcomingRenewals } from '../lib/subscriptions/schedule';
+import { chargesBetween, chargesInWindow, nextChargeOnOrAfter, nthCharge, upcomingRenewals } from '../lib/subscriptions/schedule';
 import { categoryBreakdown, forecast, totals, yearlyMinor } from '../lib/subscriptions/totals';
 import { formatInterval } from '../lib/format';
 import { parseDay, formatDay } from '../lib/detection/dates';
@@ -45,6 +45,21 @@ describe('schedule', () => {
     const r = upcomingRenewals(subs, day('2025-03-03'), 30);
     expect(r.map((x) => x.sub.name)).toEqual(['Soon', 'Late']);
     expect(r[0].daysUntil).toBe(2);
+  });
+});
+
+describe('chargesInWindow', () => {
+  test('counts every weekly charge and includes both window edges', () => {
+    const w = chargesInWindow([sub({ interval_unit: 'week', next_charge_date: '2025-03-03' })], day('2025-03-03'), 14);
+    expect(w.map((c) => [c.date, c.daysUntil])).toEqual([['2025-03-03', 0], ['2025-03-10', 7], ['2025-03-17', 14]]);
+  });
+  test('merges subscriptions in date order and skips cancelled ones', () => {
+    const w = chargesInWindow([
+      sub({ id: 'a', name: 'B', next_charge_date: '2025-03-12' }),
+      sub({ id: 'b', name: 'A', next_charge_date: '2025-03-05' }),
+      sub({ id: 'c', name: 'C', next_charge_date: '2025-03-06', active: 0 }),
+    ], day('2025-03-01'), 30);
+    expect(w.map((c) => c.sub.name)).toEqual(['A', 'B']);
   });
 });
 

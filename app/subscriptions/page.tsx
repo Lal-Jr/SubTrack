@@ -3,138 +3,131 @@
 import { useMemo, useState } from 'react';
 import SubscriptionForm from '@/components/subscriptions/SubscriptionForm';
 import { CategoryTag } from '@/components/subscriptions/CategoryDot';
+import { useAddSubscription } from '@/components/shell/AddMenu';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card, EmptyState, Skeleton } from '@/components/ui/Card';
+import { EmptyState, Skeleton } from '@/components/ui/Card';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input, Segmented, Select } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { CATEGORIES } from '@/lib/chartColors';
-import { formatDate, formatInterval, formatMajor, relativeDays } from '@/lib/format';
-import { useProfile, useSubscriptions } from '@/lib/hooks/useData';
 import { dayDiff } from '@/lib/detection/dates';
+import { formatInterval, formatMajor, formatShortDate, relativeDays } from '@/lib/format';
+import { useProfile, useSubscriptions } from '@/lib/hooks/useData';
 import { nextChargeOnOrAfter, todayUtc } from '@/lib/subscriptions/schedule';
 import { deleteSubscription, setActive } from '@/lib/subscriptions/store';
 import { monthlyMinor } from '@/lib/subscriptions/totals';
 import { isActive, type SubscriptionRow } from '@/lib/subscriptions/types';
+import { formatDay } from '@/lib/detection/dates';
 import { toMajor } from '@/types/money';
 
 type Filter = 'active' | 'cancelled' | 'all';
-type Sort = 'next' | 'cost' | 'name';
+
+interface Row {
+    s: SubscriptionRow;
+    next: number | null;
+}
+
+const GROUPS = [
+    { key: 'week', title: 'Next 7 days' },
+    { key: 'month', title: 'Next 30 days' },
+    { key: 'later', title: 'Later' },
+    { key: 'cancelled', title: 'Cancelled' },
+] as const;
 
 export default function SubscriptionsPage() {
     const { data, loading } = useSubscriptions();
     const { currency } = useProfile();
+    const { open: openAdd } = useAddSubscription();
     const [filter, setFilter] = useState<Filter>('active');
-    const [sort, setSort] = useState<Sort>('next');
     const [category, setCategory] = useState('');
     const [query, setQuery] = useState('');
-    const [editing, setEditing] = useState<SubscriptionRow | 'new' | null>(null);
+    const [editing, setEditing] = useState<SubscriptionRow | null>(null);
     const [deleting, setDeleting] = useState<SubscriptionRow | null>(null);
 
     const today = todayUtc();
-    const rows = useMemo(() => {
+    const grouped = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return data
+        const rows: Row[] = data
             .filter((s) => (filter === 'all' ? true : filter === 'active' ? isActive(s) : !isActive(s)))
             .filter((s) => !category || (s.category || 'Other') === category)
             .filter((s) => !q || s.name.toLowerCase().includes(q))
             .map((s) => ({ s, next: isActive(s) ? nextChargeOnOrAfter(s, today) : null }))
-            .sort((a, b) => {
-                if (sort === 'name') return a.s.name.localeCompare(b.s.name);
-                if (sort === 'cost') return monthlyMinor(b.s) - monthlyMinor(a.s);
-                return (a.next ?? Infinity) - (b.next ?? Infinity) || a.s.name.localeCompare(b.s.name);
-            });
-    }, [data, filter, sort, category, query, today]);
+            .sort((a, b) => (a.next ?? Infinity) - (b.next ?? Infinity) || a.s.name.localeCompare(b.s.name));
+        const bucket = (r: Row) => {
+            if (!isActive(r.s)) return 'cancelled';
+            const d = r.next === null ? Infinity : dayDiff(today, r.next);
+            return d <= 7 ? 'week' : d <= 30 ? 'month' : 'later';
+        };
+        return GROUPS.map((g) => ({ ...g, rows: rows.filter((r) => bucket(r) === g.key) })).filter((g) => g.rows.length > 0);
+    }, [data, filter, category, query, today]);
 
-    const close = () => setEditing(null);
+    const activeCount = data.filter(isActive).length;
 
     return (
         <div>
-            <PageHeader
-                title="Subscriptions"
-                description={loading ? undefined : `${data.filter(isActive).length} active`}
-                action={<Button variant="primary" onClick={() => setEditing('new')}>Add subscription</Button>}
-            />
+            <PageHeader title="Every subscription" description={loading ? undefined : `${activeCount} active`} />
 
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-                <Segmented
-                    label="Status"
-                    value={filter}
-                    onChange={setFilter}
-                    options={[{ value: 'active', label: 'Active' }, { value: 'cancelled', label: 'Cancelled' }, { value: 'all', label: 'All' }]}
-                />
-                <div className="w-full sm:w-56"><Input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search subscriptions" /></div>
-                <div className="w-40"><Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category"><option value="">All categories</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select></div>
-                <div className="w-44 sm:ml-auto">
-                    <Select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort by">
-                        <option value="next">Next charge</option>
-                        <option value="cost">Highest cost</option>
-                        <option value="name">Name</option>
-                    </Select>
-                </div>
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+                <Segmented label="Status" value={filter} onChange={setFilter} options={[{ value: 'active', label: 'Active' }, { value: 'cancelled', label: 'Cancelled' }, { value: 'all', label: 'All' }]} />
+                <div className="flex-1 min-w-40"><Input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search subscriptions" /></div>
+                <div className="w-full sm:w-44"><Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category"><option value="">All categories</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select></div>
             </div>
 
-            <Card className="overflow-hidden">
-                {loading ? (
-                    <div className="p-5 space-y-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>
-                ) : rows.length === 0 ? (
-                    <EmptyState
-                        title={data.length === 0 ? 'No subscriptions yet' : 'Nothing matches'}
-                        body={data.length === 0 ? 'Add one by hand, or import a bank statement to find them automatically.' : 'Try a different filter or search.'}
-                        action={data.length === 0 ? <Button variant="primary" onClick={() => setEditing('new')}>Add subscription</Button> : undefined}
-                    />
-                ) : (
-                    <ul className="divide-y divide-line">
-                        {rows.map(({ s, next }) => {
-                            const cur = s.currency ?? currency;
-                            const active = isActive(s);
-                            return (
-                                <li key={s.id} className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-2 px-5 py-4 hover:bg-raised/40">
-                                    <div className="min-w-0 flex-1 basis-40">
-                                        <p className="font-medium truncate flex items-center gap-2">
-                                            {s.name}
-                                            {!active && <Badge>Cancelled</Badge>}
-                                            {s.is_variable === 1 && <Badge>Varies</Badge>}
-                                        </p>
-                                        <p className="flex items-center gap-2 mt-0.5 text-xs text-ink-3">
-                                            <CategoryTag category={s.category} />
-                                            <span aria-hidden>·</span>
-                                            {formatInterval(s.interval_count, s.interval_unit)}
-                                        </p>
-                                    </div>
-                                    <div className="text-right sm:w-36 tabular">
-                                        <p className="font-medium">{formatMajor(s.amount ?? 0, cur)}</p>
-                                        <p className="text-xs text-ink-3">{formatMajor(toMajor(monthlyMinor(s)), cur)}/mo</p>
-                                    </div>
-                                    <div className="text-right sm:w-36 text-sm">
-                                        {next !== null ? (
-                                            <>
-                                                <p className="tabular">{formatDate(new Date(next).toISOString())}</p>
-                                                <p className="text-xs text-ink-3">{relativeDays(dayDiff(today, next))}</p>
-                                            </>
-                                        ) : <p className="text-ink-3">-</p>}
-                                    </div>
-                                    <div className="flex gap-1 ml-auto">
-                                        <Button size="sm" variant="ghost" onClick={() => setEditing(s)} aria-label={`Edit ${s.name}`}>Edit</Button>
-                                        <Button size="sm" variant="ghost" onClick={() => setActive(s.id, !active)} aria-label={`${active ? 'Mark cancelled' : 'Resume'} ${s.name}`}>
-                                            {active ? 'Cancel' : 'Resume'}
-                                        </Button>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
-            </Card>
+            {loading ? (
+                <div className="space-y-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+            ) : grouped.length === 0 ? (
+                <EmptyState
+                    title={data.length === 0 ? 'Nothing here yet.' : 'Nothing matches.'}
+                    body={data.length === 0 ? 'Add one by hand, or import a bank statement to find them automatically.' : 'Try a different filter or search.'}
+                    action={data.length === 0 ? <Button variant="primary" onClick={openAdd}>Add subscription</Button> : undefined}
+                />
+            ) : (
+                <div className="space-y-8">
+                    {grouped.map((g) => (
+                        <section key={g.key} aria-label={g.title}>
+                            <h2 className="eyebrow border-t border-line pt-4 mb-1">{g.title}</h2>
+                            <ul>
+                                {g.rows.map(({ s, next }) => {
+                                    const cur = s.currency ?? currency;
+                                    return (
+                                        <li key={s.id}>
+                                            <button type="button" onClick={() => setEditing(s)} className="w-full text-left py-3.5 group" aria-label={`Open ${s.name}`}>
+                                                <div className="flex items-baseline gap-3">
+                                                    <span className="eyebrow w-14 shrink-0">{next !== null ? formatShortDate(formatDay(next)) : '—'}</span>
+                                                    <span className="truncate text-[17px] group-hover:text-accent transition-colors">{s.name}</span>
+                                                    {!isActive(s) && <Badge>Cancelled</Badge>}
+                                                    {s.is_variable === 1 && <Badge>Varies</Badge>}
+                                                    <span className="leader" aria-hidden />
+                                                    <span className="tabular shrink-0">{formatMajor(s.amount ?? 0, cur)}</span>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 pl-[68px] text-xs text-ink-3">
+                                                    <CategoryTag category={s.category} />
+                                                    <span aria-hidden>·</span>
+                                                    <span>{formatInterval(s.interval_count, s.interval_unit)}</span>
+                                                    <span aria-hidden>·</span>
+                                                    <span className="tabular">{formatMajor(toMajor(monthlyMinor(s)), cur)}/mo</span>
+                                                    {next !== null && <span className="hidden sm:contents"><span aria-hidden>·</span><span>{relativeDays(dayDiff(today, next)).toLowerCase()}</span></span>}
+                                                </div>
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </section>
+                    ))}
+                </div>
+            )}
 
-            <Dialog open={editing !== null} onClose={close} title={editing === 'new' ? 'Add subscription' : 'Edit subscription'}>
-                {editing !== null && (
+            <Dialog open={editing !== null} onClose={() => setEditing(null)} title={editing?.name ?? 'Edit'}>
+                {editing && (
                     <SubscriptionForm
-                        existing={editing === 'new' ? undefined : editing}
+                        key={editing.id}
+                        existing={editing}
                         defaultCurrency={currency}
-                        onDone={close}
-                        onDelete={editing === 'new' ? undefined : () => { setDeleting(editing); close(); }}
+                        onDone={() => setEditing(null)}
+                        onToggleActive={async () => { await setActive(editing.id, !isActive(editing)); setEditing(null); }}
+                        onDelete={() => { setDeleting(editing); setEditing(null); }}
                     />
                 )}
             </Dialog>

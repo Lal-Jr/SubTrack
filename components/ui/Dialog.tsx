@@ -43,11 +43,11 @@ export function Dialog({ open, onClose, title, children, width = 'max-w-lg' }: P
                 aria-modal="true"
                 aria-label={title}
                 tabIndex={-1}
-                className={`relative w-full ${width} max-h-[92dvh] flex flex-col bg-surface border border-line-strong rounded-t-2xl sm:rounded-2xl shadow-2xl outline-none`}
+                className={`relative w-full ${width} max-h-[92dvh] flex flex-col bg-surface border border-line-strong rounded-t-3xl sm:rounded-3xl shadow-2xl outline-none`}
             >
-                <div className="flex items-center justify-between px-5 h-14 border-b border-line shrink-0">
-                    <h2 className="font-semibold">{title}</h2>
-                    <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-lg text-ink-3 hover:text-ink hover:bg-raised">✕</button>
+                <div className="flex items-center justify-between px-5 h-14 shrink-0">
+                    <h2 className="font-display text-2xl">{title}</h2>
+                    <button onClick={onClose} aria-label="Close" className="w-8 h-8 rounded-full text-ink-3 hover:text-ink hover:bg-raised">✕</button>
                 </div>
                 <div className="p-5 overflow-y-auto custom-scrollbar">{children}</div>
             </div>

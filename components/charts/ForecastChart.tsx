@@ -24,10 +24,10 @@ export default function ForecastChart({ data, currency }: Props) {
             <div className="h-56 sm:h-64" role="img" aria-label={`Bar chart of scheduled charges for the next ${data.length} months`}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={rows} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                        <CartesianGrid vertical={false} stroke="#1f2632" />
-                        <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#2c3544' }} tick={{ fill: '#7f8898', fontSize: 12 }} />
-                        <YAxis tickLine={false} axisLine={false} width={44} tick={{ fill: '#7f8898', fontSize: 12 }} tickFormatter={(v: number) => compact.format(v)} />
-                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<ForecastTooltip currency={currency} />} />
+                        <CartesianGrid vertical={false} stroke="#2a2721" />
+                        <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#3d3a32' }} tick={{ fill: '#8a8373', fontSize: 12 }} />
+                        <YAxis tickLine={false} axisLine={false} width={44} tick={{ fill: '#8a8373', fontSize: 12 }} tickFormatter={(v: number) => compact.format(v)} />
+                        <Tooltip cursor={{ fill: 'rgba(241,236,223,0.05)' }} content={<ForecastTooltip currency={currency} />} />
                         <Bar dataKey="value" fill={PRIMARY_SERIES} radius={[4, 4, 0, 0]} maxBarSize={44} />
                     </BarChart>
                 </ResponsiveContainer>
@@ -63,7 +63,7 @@ function ForecastTooltip({ active, payload, currency }: TipProps) {
     return (
         <div className="bg-raised border border-line-strong rounded-xl px-3 py-2.5 shadow-xl text-xs min-w-40">
             <p className="text-ink-2">{monthName(m.month, { month: 'long', year: 'numeric' })}{m.partial ? ' (rest of month)' : ''}</p>
-            <p className="text-ink font-semibold text-base mt-0.5 tabular">{formatMajor(m.value, currency)}</p>
+            <p className="font-display text-2xl mt-0.5 tabular">{formatMajor(m.value, currency)}</p>
             {top.length > 0 && (
                 <ul className="mt-2 space-y-1 tabular">
                     {top.map((c, i) => (

@@ -29,9 +29,11 @@ interface Props {
     defaultCurrency: string;
     onDone: () => void;
     onDelete?: () => void;
+    /** Marks an existing subscription cancelled, or resumes it. */
+    onToggleActive?: () => void;
 }
 
-export default function SubscriptionForm({ existing, defaultCurrency, onDone, onDelete }: Props) {
+export default function SubscriptionForm({ existing, defaultCurrency, onDone, onDelete, onToggleActive }: Props) {
     const count0 = existing?.interval_count ?? 1;
     const unit0 = existing?.interval_unit ?? 'month';
     const next0 = existing ? nextChargeOnOrAfter(existing, todayUtc()) : null;
@@ -141,12 +143,17 @@ export default function SubscriptionForm({ existing, defaultCurrency, onDone, on
             </Field>
 
             <label className="flex items-center gap-2 text-sm text-ink-2">
-                <input type="checkbox" checked={isVariable} onChange={(e) => setVariable(e.target.checked)} className="accent-[#2ee6a6] w-4 h-4" />
+                <input type="checkbox" checked={isVariable} onChange={(e) => setVariable(e.target.checked)} className="accent-[#dcff4d] w-4 h-4" />
                 The amount changes from charge to charge
             </label>
 
             <div className="flex items-center justify-between pt-2">
-                {existing && onDelete ? <Button variant="danger" onClick={onDelete}>Delete</Button> : <span />}
+                {existing && onDelete ? (
+                    <div className="flex gap-2">
+                        {onToggleActive && <Button onClick={onToggleActive}>{existing.active === 0 ? 'Resume' : 'Mark cancelled'}</Button>}
+                        <Button variant="danger" onClick={onDelete}>Delete</Button>
+                    </div>
+                ) : <span />}
                 <div className="flex gap-2">
                     <Button variant="ghost" onClick={onDone}>Cancel</Button>
                     <Button type="submit" variant="primary" disabled={saving}>{existing ? 'Save changes' : 'Add subscription'}</Button>

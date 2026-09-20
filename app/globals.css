@@ -1,33 +1,35 @@
 @import "tailwindcss";
 
 /*
- * Subtrack design tokens: a single dark "fintech" theme.
- * Layers: canvas (page) < surface (cards) < raised (hover, inputs, menus).
- * One accent (mint) for actions and positive emphasis; status colors are reserved for state.
+ * Subtrack design tokens: "Runway", a warm-ink dark theme.
+ * Layers: canvas (page) < surface < raised (inputs, menus). Structure comes from hairlines and type, not boxes.
+ * One signal color (citron) marks what is next and what is actionable; status colors are reserved for state.
+ * Display type is a serif for headline figures; dates, labels and columns use the mono.
  * Chart series colors are the validated categorical set in lib/chartColors.ts.
  */
 @theme {
-  --color-canvas: #0a0d12;
-  --color-surface: #11151c;
-  --color-raised: #171c25;
-  --color-line: #1f2632;
-  --color-line-strong: #2c3544;
+  --color-canvas: #0d0c0a;
+  --color-surface: #141310;
+  --color-raised: #1c1a16;
+  --color-line: #2a2721;
+  --color-line-strong: #3d3a32;
 
-  --color-ink: #f2f4f8;
-  --color-ink-2: #aab2c0;
-  --color-ink-3: #7f8898;
+  --color-ink: #f1ecdf;
+  --color-ink-2: #b9b1a0;
+  --color-ink-3: #8a8373;
 
-  --color-accent: #2ee6a6;
-  --color-accent-strong: #5ff0bd;
-  --color-accent-ink: #04130d;
-  --color-accent-soft: rgb(46 230 166 / 0.12);
+  --color-accent: #dcff4d;
+  --color-accent-strong: #ecff8f;
+  --color-accent-ink: #161a06;
+  --color-accent-soft: rgb(220 255 77 / 0.10);
 
-  --color-warn: #fab219;
-  --color-danger: #f0605d;
-  --color-info: #6da7ec;
+  --color-warn: #f5b83d;
+  --color-danger: #ff6b5e;
+  --color-info: #8ab4f8;
 
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-display), 'Iowan Old Style', Georgia, serif;
 
   --radius-card: 16px;
 }
@@ -60,7 +62,26 @@ body {
 }
 
 ::selection {
-  background: var(--color-accent-soft);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/* Small uppercase mono label used for section titles and metadata. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Dotted leader between a label and its value, like a printed ledger line. */
+.leader {
+  flex: 1;
+  min-width: 12px;
+  align-self: end;
+  margin-bottom: 0.32em;
+  border-bottom: 1.5px dotted var(--color-line-strong);
 }
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
