@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import ProfileForm from '@/components/ProfileForm';
-import CSVUploadComponent from '@/components/CSVUploadComponent';
+import ImportFlow from '@/components/import/ImportFlow';
 
 export default function ProfilePage() {
     return (
@@ -49,7 +49,7 @@ export default function ProfilePage() {
                         </h2>
                     </div>
                     <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-                        <CSVUploadComponent />
+                        <ImportFlow />
                     </div>
                 </div>
 

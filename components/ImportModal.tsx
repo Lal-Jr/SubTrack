@@ -1,6 +1,6 @@
 'use client';
 
-import CSVUploadComponent from '@/components/CSVUploadComponent';
+import ImportFlow from '@/components/import/ImportFlow';
 import Modal from '@/components/Modal';
 
 export default function ImportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
@@ -13,7 +13,7 @@ export default function ImportModal({ isOpen, onClose }: { isOpen: boolean, onCl
             maxWidthClass="max-w-xl"
             contentClassName="p-5 overflow-y-auto custom-scrollbar min-h-[300px]"
         >
-            <CSVUploadComponent onSuccess={onClose} />
+            <ImportFlow onSuccess={onClose} />
         </Modal>
     );
 }
