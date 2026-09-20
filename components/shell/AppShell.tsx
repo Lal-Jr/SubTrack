@@ -35,6 +35,8 @@ function DockLink({ n, current }: { n: (typeof NAV)[number]; current: boolean })
 function Shell({ children }: { children: ReactNode }) {
     const path = usePathname();
     const { open } = useAddSubscription();
+    // The home page bleeds wider for the billboard and rows; text-heavy pages keep a reading column.
+    const wide = path === '/';
     const left = NAV.slice(0, 2);
     const right = NAV.slice(2);
 
@@ -42,7 +44,7 @@ function Shell({ children }: { children: ReactNode }) {
         <>
             {/* Top bar: wordmark, pill nav (desktop), add */}
             <header className="sticky top-0 z-30 bg-canvas/90 backdrop-blur border-b border-line" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-                <div className="max-w-3xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
+                <div className={`${wide ? 'max-w-6xl' : 'max-w-3xl'} mx-auto px-5 h-16 flex items-center justify-between gap-4`}>
                     <Wordmark />
                     <nav aria-label="Main" className="hidden md:flex items-center gap-1">
                         {NAV.map((n) => {
@@ -65,7 +67,7 @@ function Shell({ children }: { children: ReactNode }) {
                 </div>
             </header>
 
-            <main className="max-w-3xl mx-auto px-5 pt-8 md:pt-12 pb-32 md:pb-20 min-h-[calc(100dvh-4rem)]">{children}</main>
+            <main className={`${wide ? 'max-w-6xl' : 'max-w-3xl'} mx-auto px-5 pt-6 md:pt-8 pb-32 md:pb-20 min-h-[calc(100dvh-4rem)]`}>{children}</main>
 
             {/* Mobile dock: thumb-reach navigation with a raised add button in the middle */}
             <nav aria-label="Main" className="md:hidden fixed bottom-0 inset-x-0 z-40 px-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}>

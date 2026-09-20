@@ -143,7 +143,7 @@ export default function SubscriptionForm({ existing, defaultCurrency, onDone, on
             </Field>
 
             <label className="flex items-center gap-2 text-sm text-ink-2">
-                <input type="checkbox" checked={isVariable} onChange={(e) => setVariable(e.target.checked)} className="accent-[#dcff4d] w-4 h-4" />
+                <input type="checkbox" checked={isVariable} onChange={(e) => setVariable(e.target.checked)} className="accent-[#1fe0a0] w-4 h-4" />
                 The amount changes from charge to charge
             </label>
 

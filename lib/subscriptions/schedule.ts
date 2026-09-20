@@ -91,3 +91,14 @@ export function chargesInWindow(subs: SubscriptionRow[], todayMs: number, days: 
     }
     return out.sort((a, b) => a.dateMs - b.dateMs || a.sub.name.localeCompare(b.sub.name));
 }
+
+/**
+ * How far through the current billing cycle we are, 0 (just charged) to 1 (due today).
+ * Null when there is no usable next charge date. Drives the progress bar on subscription cards.
+ */
+export function cycleProgress(sub: SubscriptionRow, todayMs: number): number | null {
+    const next = nextChargeOnOrAfter(sub, todayMs);
+    if (next === null) return null;
+    const cycle = approxDays(sub.interval_count ?? 1, sub.interval_unit ?? 'month');
+    return Math.min(1, Math.max(0, 1 - dayDiff(todayMs, next) / cycle));
+}

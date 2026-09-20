@@ -3,7 +3,7 @@
 /*
  * Subtrack design tokens: "Runway", a warm-ink dark theme.
  * Layers: canvas (page) < surface < raised (inputs, menus). Structure comes from hairlines and type, not boxes.
- * One signal color (citron) marks what is next and what is actionable; status colors are reserved for state.
+ * One signal color (aurora green) marks what is next and what is actionable; status colors are reserved for state.
  * Display type is a serif for headline figures; dates, labels and columns use the mono.
  * Chart series colors are the validated categorical set in lib/chartColors.ts.
  */
@@ -18,10 +18,10 @@
   --color-ink-2: #b9b1a0;
   --color-ink-3: #8a8373;
 
-  --color-accent: #dcff4d;
-  --color-accent-strong: #ecff8f;
-  --color-accent-ink: #161a06;
-  --color-accent-soft: rgb(220 255 77 / 0.10);
+  --color-accent: #1fe0a0;
+  --color-accent-strong: #6ff0c6;
+  --color-accent-ink: #03150e;
+  --color-accent-soft: rgb(31 224 160 / 0.12);
 
   --color-warn: #f5b83d;
   --color-danger: #ff6b5e;
@@ -88,6 +88,10 @@ body {
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 10px; }
 .custom-scrollbar { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
+
+/* Hide scrollbars on swipeable rows; they scroll by touch, wheel and the arrow buttons. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

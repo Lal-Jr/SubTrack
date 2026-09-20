@@ -15,4 +15,4 @@ export function categoryColor(category: string): string {
 export const CATEGORIES = CATEGORY_ORDER;
 
 /** Single-series charts (money leaving the account) use the signal color. */
-export const PRIMARY_SERIES = '#dcff4d';
+export const PRIMARY_SERIES = '#1fe0a0';

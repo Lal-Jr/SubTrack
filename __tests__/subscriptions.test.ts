@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { chargesBetween, chargesInWindow, nextChargeOnOrAfter, nthCharge, upcomingRenewals } from '../lib/subscriptions/schedule';
+import { chargesBetween, chargesInWindow, cycleProgress, nextChargeOnOrAfter, nthCharge, upcomingRenewals } from '../lib/subscriptions/schedule';
 import { categoryBreakdown, forecast, totals, yearlyMinor } from '../lib/subscriptions/totals';
 import { formatInterval } from '../lib/format';
 import { parseDay, formatDay } from '../lib/detection/dates';
@@ -60,6 +60,15 @@ describe('chargesInWindow', () => {
       sub({ id: 'c', name: 'C', next_charge_date: '2025-03-06', active: 0 }),
     ], day('2025-03-01'), 30);
     expect(w.map((c) => c.sub.name)).toEqual(['A', 'B']);
+  });
+});
+
+describe('cycleProgress', () => {
+  test('is halfway when a monthly charge is 15 days away, full when due, and clamped', () => {
+    expect(cycleProgress(sub({ next_charge_date: '2025-03-25' }), day('2025-03-10'))).toBeCloseTo(0.5);
+    expect(cycleProgress(sub({ next_charge_date: '2025-03-10' }), day('2025-03-10'))).toBe(1);
+    expect(cycleProgress(sub({ interval_unit: 'week', next_charge_date: '2025-03-10' }), day('2025-03-01'))).toBeGreaterThanOrEqual(0);
+    expect(cycleProgress(sub({ next_charge_date: null }), day('2025-03-10'))).toBeNull();
   });
 });
 

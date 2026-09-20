@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import SubscriptionForm from '@/components/subscriptions/SubscriptionForm';
+import EditSheet from '@/components/subscriptions/EditSheet';
 import { CategoryTag } from '@/components/subscriptions/CategoryDot';
 import { useAddSubscription } from '@/components/shell/AddMenu';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Skeleton } from '@/components/ui/Card';
-import { Dialog } from '@/components/ui/Dialog';
 import { Input, Segmented, Select } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { CATEGORIES } from '@/lib/chartColors';
@@ -15,7 +14,6 @@ import { dayDiff } from '@/lib/detection/dates';
 import { formatInterval, formatMajor, formatShortDate, relativeDays } from '@/lib/format';
 import { useProfile, useSubscriptions } from '@/lib/hooks/useData';
 import { nextChargeOnOrAfter, todayUtc } from '@/lib/subscriptions/schedule';
-import { deleteSubscription, setActive } from '@/lib/subscriptions/store';
 import { monthlyMinor } from '@/lib/subscriptions/totals';
 import { isActive, type SubscriptionRow } from '@/lib/subscriptions/types';
 import { formatDay } from '@/lib/detection/dates';
@@ -43,7 +41,6 @@ export default function SubscriptionsPage() {
     const [category, setCategory] = useState('');
     const [query, setQuery] = useState('');
     const [editing, setEditing] = useState<SubscriptionRow | null>(null);
-    const [deleting, setDeleting] = useState<SubscriptionRow | null>(null);
 
     const today = todayUtc();
     const grouped = useMemo(() => {
@@ -119,28 +116,7 @@ export default function SubscriptionsPage() {
                 </div>
             )}
 
-            <Dialog open={editing !== null} onClose={() => setEditing(null)} title={editing?.name ?? 'Edit'}>
-                {editing && (
-                    <SubscriptionForm
-                        key={editing.id}
-                        existing={editing}
-                        defaultCurrency={currency}
-                        onDone={() => setEditing(null)}
-                        onToggleActive={async () => { await setActive(editing.id, !isActive(editing)); setEditing(null); }}
-                        onDelete={() => { setDeleting(editing); setEditing(null); }}
-                    />
-                )}
-            </Dialog>
-
-            <Dialog open={deleting !== null} onClose={() => setDeleting(null)} title="Delete subscription?" width="max-w-sm">
-                <p className="text-sm text-ink-2">
-                    <span className="text-ink font-medium">{deleting?.name}</span> will be removed permanently. If you only stopped paying for it, mark it as cancelled instead to keep the history.
-                </p>
-                <div className="flex justify-end gap-2 mt-5">
-                    <Button variant="ghost" onClick={() => setDeleting(null)}>Keep it</Button>
-                    <Button variant="danger" onClick={async () => { if (deleting) await deleteSubscription(deleting.id); setDeleting(null); }}>Delete</Button>
-                </div>
-            </Dialog>
+            <EditSheet sub={editing} currency={currency} onClose={() => setEditing(null)} />
         </div>
     );
 }
