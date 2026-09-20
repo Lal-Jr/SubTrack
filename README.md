@@ -2,7 +2,7 @@
 
 A private, offline-first subscription tracker. It finds your recurring payments in bank statements, shows what is about to leave your account and when, and tells you what is worth acting on. Everything lives on your device.
 
-> **Status:** the local app is complete and usable. Opt-in multi-device sync (Phase 5) is designed and partly scaffolded but **not implemented yet**; see [Roadmap](#roadmap).
+> **Status:** feature complete. Subtrack runs fully local by default, and you can opt in to multi-device sync with a magic-link sign-in; see [Cloud sync](#cloud-sync-optional).
 
 ## What it does
 
@@ -12,7 +12,7 @@ A private, offline-first subscription tracker. It finds your recurring payments 
 | **Subscriptions** | A sortable, filterable table (status, category, search) with per-month and per-charge cost, totals row, and a shared edit / cancel / resume / delete sheet. |
 | **Insights** | Yearly weight by subscription, category breakdown, a 12-month schedule built from real charge dates, a renewal calendar, savings from cancelled subscriptions. |
 | **Import** | Drag and drop a bank statement (CSV or PDF). Column mapping when detection is unsure, duplicate-safe re-imports, and a review step before anything is saved. |
-| **Settings** | Profile (name, currency, income), sample data, backup download / restore (merge or replace), delete everything. |
+| **Settings** | Profile (name, currency, income), **cloud sync** (sign in with a magic link, turn sync on or off, see its status), sample data, backup download / restore (merge or replace), delete everything. |
 
 **Worth a look** examples (computed from your data, not canned text): a large annual charge coming up and how big it is against a normal month, renewals in the next three days, one subscription dominating your spend, several subscriptions crowding one category, and your cost per day.
 
@@ -20,10 +20,11 @@ A private, offline-first subscription tracker. It finds your recurring payments 
 
 ## Privacy
 
-- Statements are parsed **in the browser**. Nothing is uploaded.
+- Statements are parsed **in the browser**. The files themselves are never uploaded.
 - Data is stored in a local SQLite database (OPFS). The app works fully offline.
-- There is no account, no analytics and no network dependency in the default build.
-- Use **Settings → Download backup** to move data between devices today.
+- **By default there is no account, no analytics and no network dependency.**
+- If you turn on [cloud sync](#cloud-sync-optional), your subscriptions, transactions and profile are synced to *your own* Supabase project, scoped to your user by row-level security. Turning sync off stops it and keeps your local data.
+- **Settings → Download backup** works with or without sync.
 
 ## Tech stack
 
@@ -31,6 +32,7 @@ A private, offline-first subscription tracker. It finds your recurring payments 
 - **Styling:** Tailwind CSS v4 with design tokens in `app/globals.css`. Dark theme only.
 - **Type:** Geist (UI), Geist Mono (dates and labels), Instrument Serif (headline figures)
 - **Local database:** `@powersync/web` over `@journeyapps/wa-sqlite` (SQLite on OPFS)
+- **Cloud sync (optional):** Supabase (Auth + Postgres) and PowerSync
 - **Parsing:** PapaParse (CSV), pdf.js (PDF)
 - **Charts:** Recharts for the schedule chart; the runway, bars, gauge and calendar are plain HTML/SVG
 - **PWA:** Serwist service worker and a web manifest
@@ -55,7 +57,7 @@ If port 3000 is taken: `npx next dev -p 3111`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 
-**Environment variables are optional.** The default build needs none. They only matter for the planned cloud sync:
+**Environment variables are optional.** The default build needs none. Set them to enable cloud sync:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -63,7 +65,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_POWERSYNC_URL=
 ```
 
-Keep them in `.env.local` (gitignored). When any of them is missing, the sync option stays hidden.
+Keep them in `.env.local` (gitignored). When any of them is missing, the sync option is hidden and the app stays local-only.
 
 ## Architecture
 
@@ -81,7 +83,7 @@ lib/
   detection/           Subscription detection engine (pure, no I/O)
   import/              CSV / PDF parsing, dates and amounts, duplicate keys, persistence
   subscriptions/       Schedule math, totals and forecast, insights, persistence
-  sync/                SyncProvider seam (no-op by default) + Supabase groundwork
+  sync/                SyncProvider seam (no-op by default) + Supabase provider and connector
   hooks/               useLiveQuery, useSubscriptions, useProfile
 types/                 Integer-money helpers
 __tests__/             Detection, import, schedule/totals/insights, backup, migrations, money
@@ -107,32 +109,38 @@ One pipeline: drop unusable and excluded rows (loans, EMIs, salary, self transfe
 - **PDF:** reads text with pdf.js and decides debit vs credit from how the running balance moves (oldest-first or newest-first statements), trusts `Dr`/`Cr` suffixes, and warns when it had to guess. Password-protected and scanned PDFs get a clear message.
 - **Duplicates:** every row gets a stable key, so re-importing or importing an overlapping statement adds nothing twice. Detection runs over all stored transactions plus the new ones, so it improves as you import more months.
 
+## Cloud sync (optional)
+
+Sync is off until you turn it on, and the app never needs it. It exists so the same data can follow you across devices.
+
+**How it works**
+
+- **Sign-in:** Supabase magic link (email only, no passwords). Sync requires a signed-in user; there is no anonymous mode.
+- **Isolation:** every synced table carries a `user_id`, and row-level security limits each user to their own rows.
+- **Transport:** PowerSync keeps the local SQLite database and Supabase in step in both directions. Changes made offline are queued and uploaded when you reconnect.
+- **Provider seam:** the app talks to a `SyncProvider` interface (`lib/sync/types.ts`). The default provider does nothing; the Supabase provider is loaded on demand, so local-only users never download backend code.
+- **Safe uploads:** transient errors are retried; permanently invalid rows are dropped so one bad row cannot block the queue.
+- **Turning it off:** stops syncing and keeps all local data.
+- **Enabling it:** existing local data is uploaded the first time you turn sync on.
+
+**Using it**
+
+1. Set the three environment variables above.
+2. Open **Settings**, choose cloud sync, and sign in with the magic link sent to your email.
+3. The status indicator shows off, connecting, syncing, synced or error.
+
+**Setting up your own backend**
+
+You need a Supabase project and a PowerSync instance connected to it.
+
+- Supabase: enable email sign-in, create the tables that mirror the local schema (`subscriptions`, `profiles`, `transactions`) with a `user_id` column, and add a row-level security policy of `user_id = auth.uid()` on each.
+- PowerSync: connect it to your Supabase Postgres and define sync rules that select each user's rows by `user_id`.
+
 ## Testing
 
-`npm test` runs the pure logic: detection, parsers, schedules, totals, insights, backup format and migrations. The UI is verified manually; there are no component or end-to-end tests yet.
+`npm test` runs the pure logic: detection, parsers, schedules, totals, insights, backup format and migrations. The UI and cloud sync are verified manually; there are no component or end-to-end tests yet.
 
 ## Roadmap
-
-### Phase 5: opt-in multi-device sync (planned, not built)
-
-The app stays **local-first and account-free by default**. Sync is an option you turn on later, and turning it off returns to local-only without losing data.
-
-Already in place:
-
-- A `SyncProvider` interface (`lib/sync/types.ts`) with a no-op default. The app only talks to this interface, and the Supabase provider is loaded on demand, so local-only users never download backend code.
-- A Supabase connector that **requires a signed-in user** (no anonymous fallback) and handles upload errors: transient errors are retried, permanently invalid rows are dropped so one bad row cannot block the queue.
-- The sync option is hidden unless the three environment variables above are set.
-- PowerSync queues local writes even while offline, which is what lets existing data upload on first enable.
-
-To build:
-
-1. **Auth:** Supabase magic-link sign-in only, offered when the user enables sync.
-2. **Row security:** `user_id` on every synced table; RLS policy `user_id = auth.uid()`; SQL migrations under `supabase/`.
-3. **Sync rules:** PowerSync rules scoped by user; add `user_id` to the local schema.
-4. **UI:** Settings toggle, a sync status indicator (off, connecting, syncing, synced, error), and a first-enable flow that uploads existing local data.
-5. **Testing:** end-to-end against a real Supabase project and PowerSync instance.
-
-Prerequisite: a Supabase project and a PowerSync instance.
 
 ### Phase 6: polish
 
@@ -146,5 +154,5 @@ Prerequisite: a Supabase project and a PowerSync instance.
 - **Subscription amounts are floating point** in the database. Transactions use integer minor units. Converting subscriptions is planned.
 - **The merchant list is a starter set** (a mix of global and Indian services), not exhaustive. Unknown merchants are still detected from their charge pattern.
 - **PDF parsing** was built against typical layouts and synthetic fixtures. Unusual statement formats may need a CSV export or a mapping fix; please report them.
-- **No conflict handling** yet because there is no sync. Restore-from-backup "merge" overwrites rows with the same id.
+- **Sync conflicts** follow last-write-wins per row; there is no field-level merging. Restore-from-backup "merge" overwrites rows with the same id.
 - The UI has been checked in desktop Chrome and a phone-width frame, not on physical devices.
