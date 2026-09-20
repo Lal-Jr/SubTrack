@@ -2,7 +2,9 @@
 
 A private, offline-first subscription tracker. It finds your recurring payments in bank statements, shows what is about to leave your account and when, and points out what is worth acting on. Everything lives on your device unless you opt in to sync.
 
-![The Runway dashboard](docs/screenshots/runway.jpg)
+![Subtrack demo: runway, list, insights and statement import](docs/demo.gif)
+
+*A quick tour with the built-in sample data: pick a charge on the runway, switch to 90 days, browse the list and insights, then drop in a bank statement.*
 
 ## Contents
 
@@ -21,6 +23,8 @@ A private, offline-first subscription tracker. It finds your recurring payments 
 ## Features
 
 **Runway (home).** A KPI strip (per month, per year and per day, next 30 days, next charge), a 30 or 90 day timeline where every charge is a bead sized by its amount, an aligned table of upcoming charges, a category split, an income-committed gauge, and **Worth a look** insights.
+
+![The Runway dashboard](docs/screenshots/runway.jpg)
 
 **Subscriptions.** A sortable, filterable table (status, category, search) with per-month and per-charge cost and a totals row. One edit sheet handles edit, cancel, resume and delete.
 
