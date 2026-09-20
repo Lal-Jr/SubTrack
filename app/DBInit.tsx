@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { db } from "@/lib/db";
 import { runMigrations } from "@/lib/db/migrations";
+import { seedSampleOnFirstRun } from "@/lib/db/seed";
 import { settingsStore } from "@/lib/db/settings";
 
 export default function DBInit() {
@@ -14,6 +15,7 @@ export default function DBInit() {
                 console.log("Calling db.init()...");
                 await db.init();
                 await runMigrations(settingsStore);
+                await seedSampleOnFirstRun();
 
                 if (mounted) {
                     console.log("Local database ready (local-only).");
