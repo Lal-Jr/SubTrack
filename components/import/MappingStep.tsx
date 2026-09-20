@@ -12,7 +12,7 @@ interface Props {
     onChange: (o: CsvOptions) => void;
 }
 
-const selectCls = 'w-full bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm';
+const selectCls = 'w-full h-10 bg-raised border border-line-strong rounded-xl px-3 text-sm text-ink focus:border-accent focus:outline-none';
 
 export default function MappingStep({ grid, options, currency, dateOrderAmbiguous, onChange }: Props) {
     const { mapping, headerRow } = options;
@@ -22,7 +22,7 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
 
     const columnSelect = (label: string, value: number | undefined, onPick: (v: number | undefined) => void, optional = false) => (
         <label className="block">
-            <span className="label block mb-1">{label}</span>
+            <span className="block text-xs font-medium text-ink-2 mb-1.5">{label}</span>
             <select
                 className={selectCls}
                 value={value ?? ''}
@@ -40,12 +40,12 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-ink-3">
                 Check that the columns match your statement. You can change anything that looks wrong.
             </p>
 
             <label className="block">
-                <span className="label block mb-1">Header row</span>
+                <span className="block text-xs font-medium text-ink-2 mb-1.5">Header row</span>
                 <select className={selectCls} value={headerRow} onChange={(e) => onChange({ ...options, headerRow: Number(e.target.value) })}>
                     {grid.slice(0, 30).map((row, i) => (
                         <option key={i} value={i}>{`Row ${i + 1}: ${row.filter(Boolean).slice(0, 4).join(' | ')}`}</option>
@@ -71,7 +71,7 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
                                     : { date: mapping.date, description: mapping.description, amount: mapping.amount ?? 2, type: mapping.type },
                             })
                         }
-                        className={`px-3 py-1.5 rounded-lg border ${splitColumns === split ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300' : 'border-zinc-700 text-zinc-400'}`}
+                        className={`px-3 py-1.5 rounded-lg border ${splitColumns === split ? 'border-accent/40 bg-accent-soft text-accent' : 'border-line-strong text-ink-3'}`}
                     >
                         {split ? 'Separate debit / credit columns' : 'One amount column'}
                     </button>
@@ -89,7 +89,7 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
                         {columnSelect('Amount', mapping.amount, (v) => v !== undefined && set({ amount: v }))}
                         {columnSelect('Dr/Cr column', mapping.type, (v) => set({ type: v }), true)}
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-zinc-300">
+                    <label className="flex items-center gap-2 text-sm text-ink-2">
                         <input
                             type="checkbox"
                             checked={options.positiveIsDebit}
@@ -101,32 +101,32 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
             )}
 
             <label className="block">
-                <span className="label block mb-1">Date format</span>
+                <span className="block text-xs font-medium text-ink-2 mb-1.5">Date format</span>
                 <select className={selectCls} value={options.dateOrder} onChange={(e) => onChange({ ...options, dateOrder: e.target.value as DateOrder })}>
                     <option value="dmy">Day first (31/12/2025)</option>
                     <option value="mdy">Month first (12/31/2025)</option>
                 </select>
                 {dateOrderAmbiguous && (
-                    <span className="text-xs text-amber-400 mt-1 block">
+                    <span className="text-xs text-warn mt-1 block">
                         Every date in this file could be read either way. Check the preview below.
                     </span>
                 )}
             </label>
 
-            <div className="rounded-lg border border-zinc-800 overflow-x-auto">
+            <div className="rounded-lg border border-line overflow-x-auto">
                 <table className="w-full text-xs">
-                    <thead className="text-zinc-500 text-left">
+                    <thead className="text-ink-3 text-left">
                         <tr><th className="p-2">Date</th><th className="p-2">Description</th><th className="p-2 text-right">Amount</th></tr>
                     </thead>
                     <tbody>
                         {preview.length === 0 && (
-                            <tr><td colSpan={3} className="p-3 text-zinc-500">No rows can be read with these settings.</td></tr>
+                            <tr><td colSpan={3} className="p-3 text-ink-3">No rows can be read with these settings.</td></tr>
                         )}
                         {preview.map((t, i) => (
-                            <tr key={i} className="border-t border-zinc-800">
+                            <tr key={i} className="border-t border-line">
                                 <td className="p-2 whitespace-nowrap">{t.date}</td>
                                 <td className="p-2 max-w-[220px] truncate" title={t.description}>{t.description}</td>
-                                <td className={`p-2 text-right whitespace-nowrap ${t.amountMinor < 0 ? 'text-zinc-200' : 'text-emerald-400'}`}>
+                                <td className={`p-2 text-right whitespace-nowrap ${t.amountMinor < 0 ? 'text-ink' : 'text-accent'}`}>
                                     {formatMoney(t.amountMinor, currency)}
                                 </td>
                             </tr>

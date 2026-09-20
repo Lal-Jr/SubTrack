@@ -30,9 +30,9 @@ export interface DetectedSubscription {
     isVariable: boolean;
     firstDate: string;
     lastDate: string;
-    /** Null when the subscription looks lapsed. */
+    /** Null when the subscription looks lapsed, or when a single old charge gives no reliable timing. */
     nextDate: string | null;
-    /** False when no charge has been seen for well over one billing cycle. */
+    /** False when no charge has been seen for well over one billing cycle (never false for single charges). */
     active: boolean;
     annualCostMinor: Minor;
     /** 0..1 */

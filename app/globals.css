@@ -1,175 +1,73 @@
 @import "tailwindcss";
 
-:root {
-  --background: #09090b;
-  /* Deep zinc */
-  --foreground: #fafafa;
+/*
+ * Subtrack design tokens: a single dark "fintech" theme.
+ * Layers: canvas (page) < surface (cards) < raised (hover, inputs, menus).
+ * One accent (mint) for actions and positive emphasis; status colors are reserved for state.
+ * Chart series colors are the validated categorical set in lib/chartColors.ts.
+ */
+@theme {
+  --color-canvas: #0a0d12;
+  --color-surface: #11151c;
+  --color-raised: #171c25;
+  --color-line: #1f2632;
+  --color-line-strong: #2c3544;
+
+  --color-ink: #f2f4f8;
+  --color-ink-2: #aab2c0;
+  --color-ink-3: #7f8898;
+
+  --color-accent: #2ee6a6;
+  --color-accent-strong: #5ff0bd;
+  --color-accent-ink: #04130d;
+  --color-accent-soft: rgb(46 230 166 / 0.12);
+
+  --color-warn: #fab219;
+  --color-danger: #f0605d;
+  --color-info: #6da7ec;
+
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 16px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Base flat containers */
-.card {
-  background: #121214;
-  /* very dark zinc */
-  border: 1px solid #27272a;
-  /* simple flat border */
-  border-radius: 16px;
-  padding: 24px;
-  transition: border-color 200ms ease;
+/* Money and dates that must line up in columns. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-.card:hover {
-  border-color: #3f3f46;
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-.btn {
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  /* Indigo to Purple */
-  color: white;
-  font-weight: 600;
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms ease, filter 200ms ease;
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+::selection {
+  background: var(--color-accent-soft);
 }
 
-.btn:hover {
-  transform: translateY(-2px) scale(1.02);
-  filter: brightness(1.1);
-  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
-}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-line-strong); border-radius: 10px; }
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: var(--color-line-strong) transparent; }
 
-.btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transform: translateX(-100%);
-  transition: transform 500ms ease;
-}
-
-.btn:hover::after {
-  transform: translateX(100%);
-}
-
-.btn-secondary {
-  background: #18181b;
-  border: 1px solid #27272a;
-  box-shadow: none;
-}
-
-.btn-secondary:hover {
-  background: #27272a;
-  border-color: #3f3f46;
-}
-
-.input {
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  color: #fafafa;
-  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: #8b5cf6;
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-}
-
-.label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #a1a1aa;
-  /* text-zinc-400 */
-}
-
-.nav-pill {
-  padding: 8px 16px;
-  border-radius: 999px;
-  color: #e4e4e7;
-  font-weight: 500;
-  transition: all 200ms ease;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid transparent;
-}
-
-.nav-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.gradient-title {
-  background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
-  /* Brighter gradient for dark mode */
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 8s linear infinite;
-  background-size: 200% 200%;
-}
-
-.stat-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(24, 24, 27, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  animation: pulseGlow 6s ease-in-out infinite;
-  color: #e4e4e7;
-}
-
-.soft-divider {
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

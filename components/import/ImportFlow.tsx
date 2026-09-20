@@ -6,6 +6,7 @@ import { detectSubscriptions, toInterval, type DetectedSubscription } from '@/li
 import { dedupeKeys, extractCsv, loadStatement, type CsvOptions, type LoadedStatement, type ParseResult } from '@/lib/import';
 import { loadExisting, saveImport, type ExistingData } from '@/lib/import/store';
 import { formatMoney, toMajor } from '@/types/money';
+import { Button } from '@/components/ui/Button';
 import MappingStep from './MappingStep';
 
 type Step = 'upload' | 'mapping' | 'review';
@@ -56,7 +57,8 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
         };
     }, [parsed, existing]);
 
-    const isSelected = (d: DetectedSubscription) => selected[d.key] ?? d.active;
+    // Lapsed and seen-once candidates are offered but not pre-selected.
+    const isSelected = (d: DetectedSubscription) => selected[d.key] ?? (d.active && d.status !== 'possible');
 
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -136,25 +138,25 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
 
     return (
         <div className="flex flex-col h-full w-full space-y-4">
-            {error && <p role="alert" className="text-sm text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3">{error}</p>}
+            {error && <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-lg p-3">{error}</p>}
 
             {step === 'upload' && (
                 <div className="space-y-4">
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-sm text-ink-3">
                         Choose a bank statement (CSV or PDF). It is read on this device and never uploaded.
                         Importing several statements over time improves detection, and overlapping statements will not create duplicates.
                     </p>
                     <label className="block max-w-[180px]">
-                        <span className="label block mb-1">Statement currency</span>
+                        <span className="block text-xs font-medium text-ink-2 mb-1.5">Statement currency</span>
                         <select className={selectCls} value={currency} onChange={(e) => setCurrency(e.target.value)}>
                             {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
                         </select>
                     </label>
-                    <div className="border border-dashed border-white/10 rounded-xl p-8 text-center bg-white/[0.01]">
+                    <div className="border border-dashed border-line-strong rounded-xl p-8 text-center bg-surface">
                         <input type="file" accept=".csv,.pdf" className="hidden" ref={fileRef} onChange={handleFile} />
-                        <button type="button" className="btn btn-secondary" onClick={() => fileRef.current?.click()} disabled={busy}>
+                        <Button onClick={() => fileRef.current?.click()} disabled={busy}>
                             {busy ? 'Reading…' : 'Select CSV or PDF file'}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -163,39 +165,39 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
                 <>
                     <MappingStep grid={statement.grid} options={csvOptions} currency={currency} dateOrderAmbiguous={dateOrderAmbiguous} onChange={setCsvOptions} />
                     <div className="flex justify-between">
-                        <button type="button" className="text-sm text-zinc-400 hover:text-white" onClick={reset}>Cancel</button>
-                        <button type="button" className="btn" disabled={!parsed || parsed.transactions.length === 0} onClick={() => setStep('review')}>
+                        <button type="button" className="text-sm text-ink-3 hover:text-ink" onClick={reset}>Cancel</button>
+                        <Button variant="primary" disabled={!parsed || parsed.transactions.length === 0} onClick={() => setStep('review')}>
                             Continue
-                        </button>
+                        </Button>
                     </div>
                 </>
             )}
 
             {step === 'review' && analysis && parsed && (
                 <div className="space-y-4">
-                    <div className="bg-white/5 p-4 rounded-lg space-y-1">
-                        <p className="font-medium text-emerald-400 truncate" title={fileName}>{fileName}</p>
-                        <p className="text-sm text-zinc-300">
+                    <div className="bg-raised p-4 rounded-xl space-y-1">
+                        <p className="font-medium text-accent truncate" title={fileName}>{fileName}</p>
+                        <p className="text-sm text-ink-2">
                             {parsed.transactions.length} transactions ({analysis.range}): {analysis.debits} debits, {parsed.transactions.length - analysis.debits} credits.
                         </p>
-                        <p className="text-xs text-zinc-400">
+                        <p className="text-xs text-ink-3">
                             {analysis.fresh.length} new, {analysis.duplicates} already imported.
                             {analysis.alreadyTracked > 0 && ` ${analysis.alreadyTracked} recurring payment(s) are already in your subscriptions.`}
                         </p>
                         <div className="flex gap-4 pt-1">
                             {statement?.kind === 'csv' && (
-                                <button type="button" className="text-xs text-indigo-400 hover:text-indigo-300" onClick={() => setStep('mapping')}>Adjust columns</button>
+                                <button type="button" className="text-xs text-accent hover:text-accent-strong" onClick={() => setStep('mapping')}>Adjust columns</button>
                             )}
-                            <button type="button" className="text-xs text-zinc-400 hover:text-white" onClick={reset}>Choose another file</button>
+                            <button type="button" className="text-xs text-ink-3 hover:text-ink" onClick={reset}>Choose another file</button>
                         </div>
                     </div>
 
                     {parsed.warnings.map((w) => (
-                        <p key={w} className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">{w}</p>
+                        <p key={w} className="text-xs text-warn bg-warn/10 border border-warn/30 rounded-lg p-3">{w}</p>
                     ))}
 
                     {analysis.candidates.length === 0 ? (
-                        <p className="text-center p-6 text-zinc-400 text-sm">
+                        <p className="text-center p-6 text-ink-3 text-sm">
                             No new recurring payments found. Transactions can still be saved, and detection improves as you import more months.
                         </p>
                     ) : (
@@ -203,28 +205,28 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
                             {analysis.candidates.map((d) => (
                                 <label
                                     key={d.key}
-                                    className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer border ${isSelected(d) ? 'bg-white/10 border-white/20' : 'bg-white/5 border-transparent opacity-60'}`}
+                                    className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer border ${isSelected(d) ? 'bg-raised border-line-strong' : 'bg-surface border-line opacity-60'}`}
                                 >
                                     <input
                                         type="checkbox"
                                         checked={isSelected(d)}
                                         onChange={() => setSelected((s) => ({ ...s, [d.key]: !isSelected(d) }))}
-                                        className="w-5 h-5"
+                                        className="w-5 h-5 accent-[#2ee6a6]"
                                     />
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium truncate" title={d.merchant}>{d.merchant}</p>
-                                        <p className="text-xs text-zinc-400">
+                                        <p className="text-xs text-ink-3">
                                             {d.frequency}, {d.occurrences === 1 ? 'seen once' : `${d.occurrences} charges`}
                                             {d.priceChanged && ', price changed'}
                                             {' · '}
-                                            {d.active ? `next ${d.nextDate}` : `looks cancelled (last ${d.lastDate})`}
+                                            {!d.active ? `looks cancelled (last ${d.lastDate})` : d.nextDate ? `next ${d.nextDate}` : `last charged ${d.lastDate}, timing unknown`}
                                         </p>
                                         <select
                                             value={categories[d.key] ?? d.category ?? ''}
                                             onChange={(e) => setCategories((c) => ({ ...c, [d.key]: e.target.value }))}
                                             onClick={(e) => e.preventDefault()}
                                             aria-label={`Category for ${d.merchant}`}
-                                            className="mt-2 text-xs bg-zinc-900 border border-zinc-700 text-zinc-300 rounded p-1 max-w-[150px]"
+                                            className="mt-2 text-xs bg-raised border border-line-strong text-ink-2 rounded p-1 max-w-[150px]"
                                         >
                                             <option value="">No category</option>
                                             {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
@@ -237,14 +239,13 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
                     )}
 
                     <div className="pt-2 flex justify-end">
-                        <button
-                            type="button"
-                            className="btn"
+                        <Button
+                            variant="primary"
                             onClick={handleImport}
                             disabled={busy || (analysis.fresh.length === 0 && !analysis.candidates.some(isSelected))}
                         >
                             {busy ? 'Saving…' : `Save ${analysis.fresh.length} transactions and ${analysis.candidates.filter(isSelected).length} subscriptions`}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -252,4 +253,4 @@ export default function ImportFlow({ onSuccess }: { onSuccess?: () => void }) {
     );
 }
 
-const selectCls = 'w-full bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm';
+const selectCls = 'w-full h-10 bg-raised border border-line-strong rounded-xl px-3 text-sm text-ink focus:border-accent focus:outline-none';

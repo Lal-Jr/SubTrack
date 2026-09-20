@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'Offline-first personal finance and subscription analyzer.',
         start_url: '/',
         display: 'standalone',
-        background_color: '#000000',
-        theme_color: '#2563eb',
+        background_color: '#0a0d12',
+        theme_color: '#0a0d12',
         icons: [
             {
                 src: '/icon.svg',

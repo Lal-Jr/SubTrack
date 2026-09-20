@@ -46,3 +46,10 @@ export async function downloadBackup(): Promise<void> {
     a.click();
     URL.revokeObjectURL(url);
 }
+
+/** Deletes every row of user data on this device. Settings (e.g. schema version) are kept. */
+export async function clearAllData(): Promise<void> {
+    await db.writeTransaction(async (tx) => {
+        for (const name of USER_TABLES) await tx.execute(`DELETE FROM ${name}`);
+    });
+}

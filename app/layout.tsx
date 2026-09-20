@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import Link from 'next/link';
 import './globals.css';
 import DBInit from './DBInit';
 import SerwistInit from '@/components/SerwistInit';
-import HeaderImportButton from '@/components/HeaderImportButton';
-import WelcomeModal from '@/components/WelcomeModal';
+import AppShell from '@/components/shell/AppShell';
+import Welcome from '@/components/shell/Welcome';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
   applicationName: "Subtrack",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Subtrack",
   },
   formatDetection: {
@@ -32,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#2563eb',
+  themeColor: '#0a0d12',
 };
 
 export default function RootLayout({
@@ -45,15 +44,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/icon.svg" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen overflow-hidden flex flex-col bg-black text-slate-50`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SerwistInit />
         <DBInit />
-        <header className="flex w-full items-center justify-between px-6 py-4 shrink-0 bg-[#09090b] border-b border-zinc-800 relative z-10">
-          <Link href="/" className="text-xl font-bold text-white">Subtrack</Link>
-          <HeaderImportButton />
-        </header>
-        <WelcomeModal />
-        <main className="flex-1 w-full overflow-hidden relative z-10">{children}</main>
+        <AppShell>{children}</AppShell>
+        <Welcome />
       </body>
     </html>
   );

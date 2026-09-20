@@ -116,7 +116,10 @@ export function detectSubscriptions(transactions: Transaction[], options: Detect
         }
 
         const last = charges[n - 1].day;
-        const active = dayDiff(last, asOf) <= cycleDays(frequency) * LAPSE_CYCLES;
+        // One charge tells us nothing about cadence, so it can never look lapsed.
+        const active = status === 'possible' || dayDiff(last, asOf) <= cycleDays(frequency) * LAPSE_CYCLES;
+        const projected = nextCharge(last, frequency);
+        const showNext = active && (status !== 'possible' || projected >= asOf);
         const price = amounts.expectedMinor;
 
         results.push({
@@ -132,7 +135,7 @@ export function detectSubscriptions(transactions: Transaction[], options: Detect
             isVariable: amounts.isVariable,
             firstDate: formatDay(charges[0].day),
             lastDate: formatDay(last),
-            nextDate: active ? formatDay(nextCharge(last, frequency)) : null,
+            nextDate: showNext ? formatDay(projected) : null,
             active,
             annualCostMinor: price * chargesPerYear(frequency),
             confidence: confidence(status, n, regularity, known, amounts.isVariable),

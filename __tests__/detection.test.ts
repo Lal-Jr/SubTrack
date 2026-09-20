@@ -52,6 +52,11 @@ describe('detectSubscriptions', () => {
     expect(s.confidence).toBeLessThan(0.5);
   });
 
+  test('an old single charge is not called cancelled and has no guessed next date', () => {
+    const [s] = detect([debit('2024-06-01', 'AMAZON PRIME YR', 1499)]);
+    expect(s).toMatchObject({ status: 'possible', active: true, nextDate: null });
+  });
+
   test('a single charge from an unknown merchant is ignored, whatever the price', () => {
     expect(detect([debit('2025-03-01', 'BLUE BOTTLE COFFEE', 250)])).toHaveLength(0);
   });
