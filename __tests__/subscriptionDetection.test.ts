@@ -1,5 +1,5 @@
 // __tests__/subscriptionDetection.test.ts
-
+import { describe, test, expect } from 'vitest';
 import { detectRecurringSubscriptions, Transaction } from '../lib/detectRecurring';
 
 describe('Deterministic Subscription Detection Engine', () => {
