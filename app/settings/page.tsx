@@ -7,6 +7,8 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input, Segmented, Select } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { clearAllData, downloadBackup, importBackup, type ImportMode } from '@/lib/db/backup';
+import { clearSampleData, loadSampleData } from '@/lib/db/sample';
+import { todayUtc } from '@/lib/subscriptions/schedule';
 import { CURRENCIES } from '@/lib/currencies';
 import { useProfile } from '@/lib/hooks/useData';
 import { saveProfile } from '@/lib/profile';
@@ -119,10 +121,17 @@ function DataCard() {
 
 export default function SettingsPage() {
     return (
-        <div>
+        <div className="max-w-2xl">
             <PageHeader title="Settings" />
             <div className="space-y-10">
                 <ProfileCard />
+                <Section title="Sample data" hint="Try the app without your own data">
+                    <p className="text-sm text-ink-2 max-w-md mb-4">Adds six example subscriptions (iCloud, YouTube Premium, Google Cloud, Claude, Netflix and Adobe Lightroom) so you can see the dashboard, runway and insights working. Sample rows are tagged and can be removed without touching your own data.</p>
+                    <div className="flex gap-2">
+                        <Button onClick={() => loadSampleData(todayUtc())}>Load sample data</Button>
+                        <Button variant="ghost" onClick={() => clearSampleData()}>Remove sample data</Button>
+                    </div>
+                </Section>
                 <DataCard />
                 <Section title="Privacy">
                     <p className="text-sm text-ink-2 max-w-md">Subtrack works fully offline. Statements are read in your browser and nothing is uploaded anywhere.</p>

@@ -106,3 +106,36 @@ test('formatInterval', () => {
   expect(formatInterval(1, 'month')).toBe('Monthly');
   expect(formatInterval(3, 'month')).toBe('Every 3 months');
 });
+
+import { buildInsights } from '../lib/subscriptions/insights';
+import { SAMPLE_SUBSCRIPTIONS } from '../lib/db/sample';
+
+describe('buildInsights', () => {
+  const today = day('2025-03-01');
+  const fromSample = SAMPLE_SUBSCRIPTIONS.map((s, i) =>
+    sub({ id: String(i), name: s.name, amount: s.amount, interval_count: s.intervalCount, interval_unit: s.intervalUnit, category: s.category, next_charge_date: formatDay(today + s.inDays * 86_400_000) }),
+  );
+
+  test('surfaces the big annual charge, the dominant subscription and category crowding for the sample data', () => {
+    const texts = buildInsights(fromSample, 'INR', today).map((i) => i.text);
+    expect(texts.some((t) => t.startsWith('Adobe Lightroom bills') && t.includes('Plan for it'))).toBe(true);
+    expect(texts.some((t) => t.startsWith('Claude is'))).toBe(true);
+    expect(texts.some((t) => t.includes('Software subscriptions add up'))).toBe(true);
+    expect(texts[texts.length - 1]).toMatch(/a day/);
+  });
+
+  test('flags a renewal in the next three days', () => {
+    const texts = buildInsights(fromSample, 'INR', today + 1 * 86_400_000).map((i) => i.text); // iCloud is 2 days out
+    expect(texts.some((t) => t.startsWith('iCloud renews in 2 days'))).toBe(true);
+  });
+
+  test('says nothing when there is nothing active', () => {
+    expect(buildInsights([], 'INR', today)).toEqual([]);
+    expect(buildInsights([sub({ active: 0 })], 'INR', today)).toEqual([]);
+  });
+});
+
+test('the sample data adds up to a believable month', () => {
+  const monthly = SAMPLE_SUBSCRIPTIONS.reduce((a, s) => a + (s.intervalUnit === 'year' ? s.amount / 12 : s.amount), 0);
+  expect(Math.round(monthly)).toBe(4005);
+});
