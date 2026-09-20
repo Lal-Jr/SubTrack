@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { categoryColor } from '@/lib/chartColors';
 import { addMonths, formatDay } from '@/lib/detection/dates';
 import { formatMajor } from '@/lib/format';
-import { chargesBetween, todayUtc } from '@/lib/subscriptions/schedule';
+import { chargesBetween, nextChargeOnOrAfter, todayUtc } from '@/lib/subscriptions/schedule';
 import { isActive, type SubscriptionRow } from '@/lib/subscriptions/types';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -13,7 +13,14 @@ const DAY = 86_400_000;
 
 export default function RenewalCalendar({ subs, currency }: { subs: SubscriptionRow[]; currency: string }) {
     const today = todayUtc();
-    const [offset, setOffset] = useState(0);
+    // Open on the month of the next renewal, so the calendar is not empty when this month's charges have passed.
+    const [offset, setOffset] = useState(() => {
+        const next = subs.filter(isActive).map((s) => nextChargeOnOrAfter(s, today)).filter((d): d is number => d !== null).sort((a, b) => a - b)[0];
+        if (next === undefined) return 0;
+        const a = new Date(today);
+        const b = new Date(next);
+        return (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + b.getUTCMonth() - a.getUTCMonth();
+    });
     const [selected, setSelected] = useState<string | null>(null);
 
     const t = new Date(today);
@@ -47,7 +54,7 @@ export default function RenewalCalendar({ subs, currency }: { subs: Subscription
                 </div>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
-                {WEEKDAYS.map((d) => <p key={d} className="text-[11px] text-ink-3 pb-1">{d}</p>)}
+                {WEEKDAYS.map((d) => <p key={d} className="eyebrow text-[10px] pb-2">{d}</p>)}
                 {Array.from({ length: lead }).map((_, i) => <div key={`b${i}`} />)}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                     const key = formatDay(monthStart + i * DAY);
@@ -62,10 +69,10 @@ export default function RenewalCalendar({ subs, currency }: { subs: Subscription
                             onClick={() => setSelected(isSelected ? null : key)}
                             aria-label={`${key}${list.length ? `: ${list.map((s) => s.name).join(', ')}` : ''}`}
                             aria-pressed={isSelected}
-                            className={`aspect-square rounded-lg text-xs flex flex-col items-center justify-center gap-0.5 border transition-colors ${isSelected ? 'border-accent bg-accent-soft' : isToday ? 'border-line-strong bg-raised' : 'border-transparent'} ${list.length ? 'hover:bg-raised cursor-pointer' : 'text-ink-3 cursor-default'}`}
+                            className={`h-12 sm:h-14 rounded-xl text-xs flex flex-col items-center justify-center gap-1 border transition-colors ${isSelected ? 'border-accent bg-accent-soft' : isToday ? 'border-accent/50' : list.length ? 'border-line-strong' : 'border-transparent'} ${list.length ? 'hover:bg-raised cursor-pointer' : 'text-ink-3 cursor-default'}`}
                         >
                             <span className={`tabular ${isToday ? 'text-accent font-semibold' : list.length ? 'text-ink' : ''}`}>{i + 1}</span>
-                            <span className="flex gap-0.5 h-1.5" aria-hidden>
+                            <span className="flex gap-0.5 h-1.5 -mb-0.5" aria-hidden>
                                 {list.slice(0, 3).map((s, j) => <span key={j} className="w-1.5 h-1.5 rounded-full" style={{ background: categoryColor(s.category || 'Other') }} />)}
                             </span>
                         </button>

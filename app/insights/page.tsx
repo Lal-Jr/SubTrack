@@ -65,6 +65,7 @@ export default function InsightsPage() {
                 </div>
                 <div className="mt-6">
                     <BarList
+                        bars={false}
                         currency={currency}
                         unit="/yr"
                         items={view.ranked.slice(0, 8).map((s) => ({ key: s.id, label: s.name, valueMinor: yearlyMinor(s), color: categoryColor(s.category || 'Other') }))}

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card, CardHeader } from '@/components/ui/Card';
+import { Section, Skeleton } from '@/components/ui/Card';
 import { Dialog } from '@/components/ui/Dialog';
 import { Field, Input, Segmented, Select } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -13,7 +13,7 @@ import { saveProfile } from '@/lib/profile';
 
 function ProfileCard() {
     const { profile, loading } = useProfile();
-    if (loading) return null;
+    if (loading) return <Section title="Profile"><div className="space-y-4 max-w-md"><Skeleton className="h-11" /><Skeleton className="h-11" /><Skeleton className="h-11" /></div></Section>;
     // Keyed on the row so the form initialises from stored values once they load.
     return <ProfileForm key={profile?.id ?? 'new'} initial={profile} />;
 }
@@ -38,9 +38,8 @@ function ProfileForm({ initial }: { initial: ReturnType<typeof useProfile>['prof
     };
 
     return (
-        <Card className="pb-5">
-            <CardHeader title="Profile" description="Used for your greeting, totals and income share" />
-            <form onSubmit={submit} className="px-5 pt-4 space-y-4 max-w-md">
+        <Section title="Profile" hint="Greeting, totals and income share">
+            <form onSubmit={submit} className="space-y-4 max-w-md">
                 <Field label="Name"><Input value={name} onChange={(e) => { setName(e.target.value); setStatus('idle'); }} /></Field>
                 <Field label="Monthly income" hint="Optional. Never leaves this device.">
                     <Input type="number" inputMode="decimal" min="0" step="0.01" value={income} onChange={(e) => { setIncome(e.target.value); setStatus('idle'); }} placeholder="0" />
@@ -57,7 +56,7 @@ function ProfileForm({ initial }: { initial: ReturnType<typeof useProfile>['prof
                     </span>
                 </div>
             </form>
-        </Card>
+        </Section>
     );
 }
 
@@ -80,9 +79,8 @@ function DataCard() {
     };
 
     return (
-        <Card className="pb-5">
-            <CardHeader title="Your data" description="Everything is stored on this device. Use a backup to move it elsewhere." />
-            <div className="px-5 pt-4 space-y-5">
+        <Section title="Your data" hint="Stored on this device only">
+            <div className="space-y-6">
                 <div className="flex flex-wrap items-center gap-3">
                     <Button onClick={() => downloadBackup().catch(() => setMessage({ tone: 'error', text: 'Could not create the backup.' }))}>Download backup</Button>
                     <span className="text-xs text-ink-3">A JSON file with your subscriptions, transactions and profile.</span>
@@ -101,7 +99,7 @@ function DataCard() {
                     <p role="status" className={`text-sm rounded-xl p-3 border ${message.tone === 'ok' ? 'text-accent bg-accent-soft border-accent/30' : 'text-danger bg-danger/10 border-danger/30'}`}>{message.text}</p>
                 )}
 
-                <div className="pt-4 border-t border-line">
+                <div className="pt-6 border-t border-line">
                     <p className="text-sm font-medium">Delete all data</p>
                     <p className="text-xs text-ink-3 mt-1 mb-3">Removes every subscription, transaction and your profile from this device. Download a backup first if you might want it back.</p>
                     <Button variant="danger" onClick={() => setConfirmClear(true)}>Delete all data</Button>
@@ -115,7 +113,7 @@ function DataCard() {
                     <Button variant="danger" onClick={async () => { await clearAllData(); setConfirmClear(false); setMessage({ tone: 'ok', text: 'All data deleted.' }); }}>Delete everything</Button>
                 </div>
             </Dialog>
-        </Card>
+        </Section>
     );
 }
 
@@ -123,13 +121,12 @@ export default function SettingsPage() {
     return (
         <div>
             <PageHeader title="Settings" />
-            <div className="space-y-6">
+            <div className="space-y-10">
                 <ProfileCard />
                 <DataCard />
-                <Card className="p-5">
-                    <h2 className="text-sm font-semibold mb-1">Privacy</h2>
-                    <p className="text-sm text-ink-3">Subtrack works fully offline. Statements are read in your browser and nothing is uploaded anywhere.</p>
-                </Card>
+                <Section title="Privacy">
+                    <p className="text-sm text-ink-2 max-w-md">Subtrack works fully offline. Statements are read in your browser and nothing is uploaded anywhere.</p>
+                </Section>
             </div>
         </div>
     );

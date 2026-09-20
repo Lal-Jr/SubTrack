@@ -1,6 +1,6 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { PRIMARY_SERIES } from '@/lib/chartColors';
 import { formatMajor, formatShortDate } from '@/lib/format';
 import type { MonthForecast } from '@/lib/subscriptions/totals';
@@ -17,6 +17,10 @@ interface Props {
 /** Scheduled charges per month. One series, so no legend; the card title names it. */
 export default function ForecastChart({ data, currency }: Props) {
     const rows = data.map((m) => ({ ...m, label: monthName(m.month, { month: 'short' }), value: toMajor(m.totalMinor) }));
+    // The heaviest month carries the signal color; the rest stay neutral so the eye lands on it.
+    // A tie (e.g. identical months) has no peak to point at, so nothing is highlighted then.
+    const max = Math.max(...rows.map((r) => r.value));
+    const peak = rows.filter((r) => r.value === max).length === 1 ? max : -1;
     const compact = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
 
     return (
@@ -28,7 +32,9 @@ export default function ForecastChart({ data, currency }: Props) {
                         <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#3d3a32' }} tick={{ fill: '#8a8373', fontSize: 12 }} />
                         <YAxis tickLine={false} axisLine={false} width={44} tick={{ fill: '#8a8373', fontSize: 12 }} tickFormatter={(v: number) => compact.format(v)} />
                         <Tooltip cursor={{ fill: 'rgba(241,236,223,0.05)' }} content={<ForecastTooltip currency={currency} />} />
-                        <Bar dataKey="value" fill={PRIMARY_SERIES} radius={[4, 4, 0, 0]} maxBarSize={44} />
+                        <Bar dataKey="value" radius={[3, 3, 0, 0]} maxBarSize={22}>
+                            {rows.map((r) => <Cell key={r.month} fill={r.value === peak ? PRIMARY_SERIES : '#8a8373'} />)}
+                        </Bar>
                     </BarChart>
                 </ResponsiveContainer>
             </div>

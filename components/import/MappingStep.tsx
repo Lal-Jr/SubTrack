@@ -12,7 +12,7 @@ interface Props {
     onChange: (o: CsvOptions) => void;
 }
 
-const selectCls = 'w-full h-10 bg-raised border border-line-strong rounded-xl px-3 text-sm text-ink focus:border-accent focus:outline-none';
+const selectCls = 'w-full h-11 bg-transparent border border-line-strong rounded-xl px-3.5 text-sm text-ink focus:border-accent focus:outline-none';
 
 export default function MappingStep({ grid, options, currency, dateOrderAmbiguous, onChange }: Props) {
     const { mapping, headerRow } = options;
@@ -40,9 +40,10 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-ink-3">
-                Check that the columns match your statement. You can change anything that looks wrong.
-            </p>
+            <div>
+                <h2 className="font-display text-4xl leading-none">Check the columns.</h2>
+                <p className="text-sm text-ink-3 mt-3">Make sure they match your statement. Change anything that looks wrong.</p>
+            </div>
 
             <label className="block">
                 <span className="block text-xs font-medium text-ink-2 mb-1.5">Header row</span>
@@ -71,7 +72,7 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
                                     : { date: mapping.date, description: mapping.description, amount: mapping.amount ?? 2, type: mapping.type },
                             })
                         }
-                        className={`px-3 py-1.5 rounded-lg border ${splitColumns === split ? 'border-accent/40 bg-accent-soft text-accent' : 'border-line-strong text-ink-3'}`}
+                        className={`px-4 h-9 rounded-full border ${splitColumns === split ? 'border-accent/40 bg-accent-soft text-accent' : 'border-line-strong text-ink-3'}`}
                     >
                         {split ? 'Separate debit / credit columns' : 'One amount column'}
                     </button>
@@ -113,7 +114,7 @@ export default function MappingStep({ grid, options, currency, dateOrderAmbiguou
                 )}
             </label>
 
-            <div className="rounded-lg border border-line overflow-x-auto">
+            <div className="rounded-xl border border-line overflow-x-auto">
                 <table className="w-full text-xs">
                     <thead className="text-ink-3 text-left">
                         <tr><th className="p-2">Date</th><th className="p-2">Description</th><th className="p-2 text-right">Amount</th></tr>
